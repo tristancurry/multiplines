@@ -27,7 +27,7 @@
 </head>
 <body>
     <div id="numberlines">
-        <input type="range" id="nl_static" list="values_static" value="0" step="any"/>
+        <input type="range" id="nl_static" list="values_static" value="0" step="any" max="10"/>
         <datalist id="values_static">
             <option value="0" label="0"></option>
             <option value="20" label="20"></option>
@@ -65,22 +65,23 @@
         //in the containing div would be a good way to set these up.
         //NB: there's a difference between input.value, and the input's HTML 'value' attribute
         nl_static.addEventListener('input', event => {
-            nl_dynamic.value = factor*nl_static.value;
+            nl_dynamic.value = (1/factor)*nl_static.value;
         });
 
         nl_dynamic.addEventListener('input', event => {
-            nl_static.value = (1/factor)*nl_dynamic.value;
+            nl_static.value = (factor)*nl_dynamic.value;
         });
 
 
         generateDataList(document.getElementById('values_static'));
-        generateDataList(document.getElementById('values_dynamic'), 10, 0, 300);
+        generateDataList(document.getElementById('values_dynamic'), 30, 0, 30);
+        updateScaleFactor(2);
 
         //this function does all the various things that need to happen whenever the scale factor is adjusted.
         function updateScaleFactor(n) {
             factor = n;
-            generateDataList(document.getElementById('values_dynamic'), 10, 0, factor*100);
-            nl_dynamic.setAttribute('max', factor*100);
+            generateDataList(document.getElementById('values_dynamic'), 10/factor, 0, parseInt(nl_static.getAttribute('max'))/factor);
+            nl_dynamic.setAttribute('max', parseInt(nl_static.getAttribute('max'))/factor);
             if(!divide) {
                 nl_static.dispatchEvent(new Event('input'));
             } else {
@@ -90,7 +91,7 @@
         }
 
         //this is used to generate the 'options' elements for the tick marks on each input range
-        function generateDataList (target, divisions_major = 10, min = 0, max = 100) {
+        function generateDataList (target, divisions_major = 10, min = 0, max = 10) {
             //clear existing option elements
             while (target.firstChild) {
                 target.removeChild(target.firstChild);
