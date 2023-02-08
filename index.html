@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiply</title>
+    <style>
+        input {
+            display: block;
+        }
+
+        datalist {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            writing-mode: vertical-lr;
+            /* width: 200px; */
+        }
+    </style>
+</head>
+<body>
+    <div id="numberlines">
+        <input type="range" id="nl_static" list="values_static"/>
+        <datalist id="values_static">
+            <option value="0" label="0"></option>
+            <option value="20" label="20"></option>
+            <option value="40" label="40"></option>
+            <option value="60" label="60"></option>
+            <option value="80" label="80"></option>
+            <option value="100" label="100"></option>
+        </datalist>
+        <!-- TODO: set min and max dynamically, and build datalists dynamically -->
+        <input type="range" id="nl_dynamic" list="values_dynamic" max="300"/>
+        <datalist id="values_dynamic">
+            <option value="0" label="0"></option>
+            <option value="60" label="60"></option>
+            <option value="120" label="120"></option>
+            <option value="180" label="180"></option>
+            <option value="240" label="240"></option>
+            <option value="3000" label="300"></option>
+        </datalist>
+    </div>
+
+
+    <script>
+        //give the sliders a reference in code.
+        //Variable names are the same as element id just for consistency,
+        //it doesn't cause awkward collisions anywhere.
+        const nl_static = document.getElementById('nl_static');
+        const nl_dynamic = document.getElementById('nl_dynamic');
+
+        //set event listeners on the two sliders
+        //if there were more sliders to synchronise, a loop over the input elements
+        //in the containing div would be a good way to set these up.
+        //NB: there's a difference between input.value, and the input's HTML 'value' attribute
+        nl_static.addEventListener('input', event => {
+            nl_dynamic.value = nl_static.value;
+        });
+
+        nl_dynamic.addEventListener('input', event => {
+            nl_static.value = nl_dynamic.value;
+
+        });
+        
+    </script>
+</body>
+</html>
