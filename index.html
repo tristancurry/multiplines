@@ -76,6 +76,7 @@
         generateDataList(document.getElementById('values_static'));
         generateDataList(document.getElementById('values_dynamic'), 10, 0, 300);
 
+        //this function does all the various things that need to happen whenever the scale factor is adjusted.
         function updateScaleFactor(n) {
             factor = n;
             generateDataList(document.getElementById('values_dynamic'), 10, 0, factor*100);
@@ -88,6 +89,7 @@
 
         }
 
+        //this is used to generate the 'options' elements for the tick marks on each input range
         function generateDataList (target, divisions_major = 10, min = 0, max = 100) {
             //clear existing option elements
             while (target.firstChild) {
