@@ -64,7 +64,6 @@
              <use transform="translate(70)" xlink:href="#path468"/>
              <use transform="translate(80)" xlink:href="#path468"/>
              <use transform="translate(90)" xlink:href="#path468"/>
-             <use transform="translate(0, 35)" xlink:href="#path468"/>
             
            </svg>
     </div>
@@ -97,6 +96,7 @@
         generateDataList(document.getElementById('values_static'));
         generateDataList(document.getElementById('values_dynamic'), 30, 0, 30);
         updateScaleFactor(2);
+        generateAxis(document.getElementsByTagName('svg')[0]);
 
         //this function does all the various things that need to happen whenever the scale factor is adjusted.
         function updateScaleFactor(n) {
@@ -126,6 +126,22 @@
                 o.setAttribute('label', val);
                 target.appendChild(o);       
             }
+        }
+
+        //this is used to produce the SVG axis with appropriate spacings and numbering of tick marks
+        function generateAxis (target, spacing, origin_position) {
+            const xmlns = 'http://www.w3.org/2000/svg';
+            const xlink = 'http://www.w3.org/1999/xlink';
+
+
+            let n_ticks = Math.floor(100/spacing);
+            for (let i = 0; i < n_ticks; i++) {
+                let tick = document.createElementNS(xmlns, 'use');
+                tick.setAttribute('transform', `translate(${i*spacing}, 35)`);
+                tick.setAttributeNS(xlink, 'xlink:href', '#path468');
+                target.appendChild(tick);
+            }
+
         }
 
         
