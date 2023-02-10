@@ -54,8 +54,8 @@
 
 
         <div id="layered">
-            <input type="range" class="range_overlay" id="nl_static" value="0" step="any" max="10">
-            <input type="range" class="range_overlay" id="nl_dynamic" value="0" step="any" max="10">
+            <input type="range" class="range_overlay" id="nl_static" step="any" max="10">
+            <input type="range" class="range_overlay" id="nl_dynamic"  step="any" max="10">
             <svg width="500" height="500" version="1.1" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
                 <defs>
                  <path id="tickmark" d="m0 -5v10" fill="none" stroke="#000" stroke-linecap="square"/>
@@ -63,15 +63,18 @@
 
                 <g fill="none" stroke="#000">
                     <g id="svg_static">
-                        <path d="m-25 35h150"/>
+                        <path id="axis_static" d="m-25 35h150"/>
+                        <g class="tickmarks"></g>
                     </g>
                     <g id="svg_dynamic">
-                        <path d="m-25 65h150"/>
+                        <path id="axis_dynamic" d="m-25 65h150"/>
+                        <g class="tickmarks"></g>
                     </g>
                 </g>
                 
                </svg>
         </div>
+        <input type="range" id="sf" min="0.1" max="5" step="any" />
     </div>
 
 
@@ -84,9 +87,13 @@
         //it doesn't cause awkward collisions anywhere.
         const numberlines = document.getElementById('numberlines');
         const svg_box = document.getElementsByTagName('svg')[0];
+
         const svg_static = document.getElementById('svg_static');
+        const ticks_static = svg_static.getElementsByClassName('tickmarks')[0];
         const nl_static = document.getElementById('nl_static');
+
         const svg_dynamic = document.getElementById('svg_dynamic');
+        const ticks_dynamic = svg_dynamic.getElementsByClassName('tickmarks')[0];
         const nl_dynamic = document.getElementById('nl_dynamic');
 
         //set event listeners on the two sliders
@@ -95,41 +102,52 @@
         //NB: there's a difference between input.value, and the input's HTML 'value' attribute
         nl_static.addEventListener('input', event => {
             nl_dynamic.value = (1/factor)*nl_static.value;
-            console.log(nl_static.value, nl_dynamic.value);
+            // console.log(nl_static.value, nl_dynamic.value);
         });
 
         nl_dynamic.addEventListener('input', event => {
             nl_static.value = (factor)*nl_dynamic.value;
-            console.log(nl_static.value, nl_dynamic.value);
-
-
+            // console.log(nl_static.value, nl_dynamic.value);
         });
 
+        const sf = document.getElementById('sf');
+        sf.addEventListener('input', event => {
+            factor = parseFloat(sf.value);
+            updateScaleFactor(factor);
+        })
 
         updateScaleFactor(2);
-        generateAxis(svg_static, {x:5, y:35});
+        generateTickmarks(ticks_static, {x:5, y:35});
 
         //this function does all the various things that need to happen whenever the scale factor is adjusted.
         function updateScaleFactor(n) {
             factor = n;
-            generateAxis(svg_dynamic, {x:5, y:65}, factor*9);
+            let val = nl_dynamic.value;
+            console.log(val);
+            generateTickmarks(ticks_dynamic, {x:5, y:65}, factor*9);
             nl_dynamic.setAttribute('max', parseInt(nl_static.getAttribute('max'))/factor);
             if(!divide) {
+                console.log(val);
+                nl_dynamic.value = val; 
                 nl_static.dispatchEvent(new Event('input'));
             } else {
                 nl_dynamic.dispatchEvent(new Event('input'));
             }
 
+
         }
 
         //this is used to produce the SVG axis with appropriate spacings and numbering of tick marks
-        function generateAxis (target, origin={x:0, y:0}, spacing=9) {
+        function generateTickmarks (target, origin={x:0, y:0}, spacing=9) {
             const xmlns = 'http://www.w3.org/2000/svg';
             const xlink = 'http://www.w3.org/1999/xlink';
 
+            while (target.firstChild) {
+                target.firstChild.remove();
+            }
+
 
             let n_ticks = Math.floor(100/spacing);
-            console.log(100/spacing);
             for (let i = 0; i <= n_ticks; i++) {
                 let tick = document.createElementNS(xmlns, 'use');
                 tick.setAttribute('transform', `translate(${origin.x + i*spacing}, ${origin.y})`);
