@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multiply</title>
+    <title>Multiplines</title>
     <style>
         input {
             display: block;
@@ -21,51 +21,53 @@
 
         #numberlines {
             position: relative;
-            width: 50%;
+            width: 75%;
         }
+
+        #layered {
+            display: flex;
+            position: relative;
+            height: 100%;
+            width: fit-content;
+        }
+
+        .range_overlay {
+            position: absolute;
+            display: block;
+            width: auto;
+            padding: 0px;
+            margin: 0px;
+            box-sizing: border-box;
+            height: 0px;
+            top: 35%;
+            width: 100%;
+        }
+
+        #nl_dynamic {
+            top: 65%;
+        }
+
     </style>
 </head>
 <body>
     <div id="numberlines">
-        <input type="range" id="nl_static" list="values_static" value="0" step="any" max="10"/>
-        <datalist id="values_static">
-            <option value="0" label="0"></option>
-            <option value="20" label="20"></option>
-            <option value="40" label="40"></option>
-            <option value="60" label="60"></option>
-            <option value="80" label="80"></option>
-            <option value="100" label="100"></option>
-        </datalist>
-        <!-- TODO: set min and max dynamically, and build datalists dynamically -->
-        <input type="range" id="nl_dynamic" list="values_dynamic" max="300" value="0" step="any"/>
-        <datalist id="values_dynamic">
-            <option value="0" label="0"></option>
-            <option value="60" label="60"></option>
-            <option value="120" label="120"></option>
-            <option value="180" label="180"></option>
-            <option value="240" label="240"></option>
-            <option value="3000" label="300"></option>
-        </datalist>
 
 
-        <svg width="500" height="500" version="1.1" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-            <g fill="none" stroke="#000">
-             <path d="m-25 35.868h150"/>
-             <path d="m-25 70.5h150"/>
-             <path id="path468" d="m5.5 30.5v10.735" fill="none" stroke="#000" stroke-linecap="square"/>
-            </g>
+        <div id="layered">
+            <input type="range" class="range_overlay" id="nl_static" value="0" step="any" max="10">
+            <input type="range" class="range_overlay" id="nl_dynamic" value="0" step="any" max="10">
+            <svg width="500" height="500" version="1.1" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                <defs>
+                 <path id="tickmark" d="m0 -5v10" fill="none" stroke="#000" stroke-linecap="square"/>
+                </defs>
 
-             <use transform="translate(10)" xlink:href="#path468"/>
-             <use transform="translate(20)" xlink:href="#path468"/>
-             <use transform="translate(30)" xlink:href="#path468"/>
-             <use transform="translate(40)" xlink:href="#path468"/>
-             <use transform="translate(50)" xlink:href="#path468"/>
-             <use transform="translate(60)" xlink:href="#path468"/>
-             <use transform="translate(70)" xlink:href="#path468"/>
-             <use transform="translate(80)" xlink:href="#path468"/>
-             <use transform="translate(90)" xlink:href="#path468"/>
-            
-           </svg>
+                <g fill="none" stroke="#000">
+                 <path d="m-25 35h150"/>
+                 <path d="m-25 65h150"/>
+                </g>
+                
+               </svg>
+        </div>
     </div>
 
 
@@ -76,6 +78,7 @@
         //give the sliders and their containing element a reference in code.
         //Variable names are the same as element id just for consistency,
         //it doesn't cause awkward collisions anywhere.
+        const svg_box = document.getElementsByTagName('svg')[0];
         const numberlines = document.getElementById('numberlines');
         const nl_static = document.getElementById('nl_static');
         const nl_dynamic = document.getElementById('nl_dynamic');
@@ -86,22 +89,24 @@
         //NB: there's a difference between input.value, and the input's HTML 'value' attribute
         nl_static.addEventListener('input', event => {
             nl_dynamic.value = (1/factor)*nl_static.value;
+            console.log(nl_static.value, nl_dynamic.value);
         });
 
         nl_dynamic.addEventListener('input', event => {
             nl_static.value = (factor)*nl_dynamic.value;
+            console.log(nl_static.value, nl_dynamic.value);
+
+
         });
 
 
-        generateDataList(document.getElementById('values_static'));
-        generateDataList(document.getElementById('values_dynamic'), 30, 0, 30);
         updateScaleFactor(2);
-        generateAxis(document.getElementsByTagName('svg')[0]);
+        generateAxis(svg_box, {x:5, y:35});
 
         //this function does all the various things that need to happen whenever the scale factor is adjusted.
         function updateScaleFactor(n) {
             factor = n;
-            generateDataList(document.getElementById('values_dynamic'), 10/factor, 0, parseInt(nl_static.getAttribute('max'))/factor);
+            generateAxis(svg_box, {x:5, y:65}, factor*9);
             nl_dynamic.setAttribute('max', parseInt(nl_static.getAttribute('max'))/factor);
             if(!divide) {
                 nl_static.dispatchEvent(new Event('input'));
@@ -111,34 +116,18 @@
 
         }
 
-        //this is used to generate the 'options' elements for the tick marks on each input range
-        function generateDataList (target, divisions_major = 10, min = 0, max = 10) {
-            //clear existing option elements
-            while (target.firstChild) {
-                target.removeChild(target.firstChild);
-            }
-            //replace with appropriate values
-            let increment = (max - min)/divisions_major;
-            for (let i = 0; i <= divisions_major; i++) {
-                let val = min + i*increment;
-                let o = document.createElement('option');
-                o.setAttribute('value', val);
-                o.setAttribute('label', val);
-                target.appendChild(o);       
-            }
-        }
-
         //this is used to produce the SVG axis with appropriate spacings and numbering of tick marks
-        function generateAxis (target, spacing, origin_position) {
+        function generateAxis (target, origin={x:0, y:0}, spacing=9) {
             const xmlns = 'http://www.w3.org/2000/svg';
             const xlink = 'http://www.w3.org/1999/xlink';
 
 
             let n_ticks = Math.floor(100/spacing);
-            for (let i = 0; i < n_ticks; i++) {
+            console.log(100/spacing);
+            for (let i = 0; i <= n_ticks; i++) {
                 let tick = document.createElementNS(xmlns, 'use');
-                tick.setAttribute('transform', `translate(${i*spacing}, 35)`);
-                tick.setAttributeNS(xlink, 'xlink:href', '#path468');
+                tick.setAttribute('transform', `translate(${origin.x + i*spacing}, ${origin.y})`);
+                tick.setAttributeNS(xlink, 'xlink:href', '#tickmark');
                 target.appendChild(tick);
             }
 
