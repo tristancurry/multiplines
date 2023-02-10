@@ -19,6 +19,10 @@
             width: 100%;
         }
 
+        svg {
+            /* width: 100%; */
+        }
+
         #numberlines {
             position: relative;
             width: 75%;
@@ -27,6 +31,7 @@
         #layered {
             display: flex;
             position: relative;
+            justify-content: center;
             height: 100%;
             width: fit-content;
         }
@@ -40,11 +45,15 @@
             box-sizing: border-box;
             height: 0px;
             top: 35%;
-            width: 100%;
+            width: 93.4%;
         }
 
         #nl_dynamic {
             top: 65%;
+        }
+
+        #svg_axes {
+            stroke-width: 0.75px;
         }
 
     </style>
@@ -61,7 +70,7 @@
                  <path id="tickmark" d="m0 -5v10" fill="none" stroke="#000" stroke-linecap="square"/>
                 </defs>
 
-                <g fill="none" stroke="#000">
+                <g fill="none" id="svg_axes" stroke="#000">
                     <g id="svg_static">
                         <path id="axis_static" d="m-25 35h150"/>
                         <g class="tickmarks"></g>
@@ -107,7 +116,7 @@
 
         nl_dynamic.addEventListener('input', event => {
             nl_static.value = (factor)*nl_dynamic.value;
-            // console.log(nl_static.value, nl_dynamic.value);
+            console.log(nl_static.value, nl_dynamic.value);
         });
 
         const sf = document.getElementById('sf');
@@ -118,20 +127,19 @@
 
         updateScaleFactor(2);
         generateTickmarks(ticks_static, {x:5, y:35});
+        nl_static.value = 0;
+        nl_static.dispatchEvent(new Event('input'));
 
         //this function does all the various things that need to happen whenever the scale factor is adjusted.
         function updateScaleFactor(n) {
             factor = n;
-            let val = nl_dynamic.value;
-            console.log(val);
+    
             generateTickmarks(ticks_dynamic, {x:5, y:65}, factor*9);
             nl_dynamic.setAttribute('max', parseInt(nl_static.getAttribute('max'))/factor);
             if(!divide) {
-                console.log(val);
-                nl_dynamic.value = val; 
-                nl_static.dispatchEvent(new Event('input'));
-            } else {
                 nl_dynamic.dispatchEvent(new Event('input'));
+            } else {
+                nl_static.dispatchEvent(new Event('input'));
             }
 
 
