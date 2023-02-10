@@ -62,8 +62,12 @@
                 </defs>
 
                 <g fill="none" stroke="#000">
-                 <path d="m-25 35h150"/>
-                 <path d="m-25 65h150"/>
+                    <g id="svg_static">
+                        <path d="m-25 35h150"/>
+                    </g>
+                    <g id="svg_dynamic">
+                        <path d="m-25 65h150"/>
+                    </g>
                 </g>
                 
                </svg>
@@ -78,9 +82,11 @@
         //give the sliders and their containing element a reference in code.
         //Variable names are the same as element id just for consistency,
         //it doesn't cause awkward collisions anywhere.
-        const svg_box = document.getElementsByTagName('svg')[0];
         const numberlines = document.getElementById('numberlines');
+        const svg_box = document.getElementsByTagName('svg')[0];
+        const svg_static = document.getElementById('svg_static');
         const nl_static = document.getElementById('nl_static');
+        const svg_dynamic = document.getElementById('svg_dynamic');
         const nl_dynamic = document.getElementById('nl_dynamic');
 
         //set event listeners on the two sliders
@@ -101,12 +107,12 @@
 
 
         updateScaleFactor(2);
-        generateAxis(svg_box, {x:5, y:35});
+        generateAxis(svg_static, {x:5, y:35});
 
         //this function does all the various things that need to happen whenever the scale factor is adjusted.
         function updateScaleFactor(n) {
             factor = n;
-            generateAxis(svg_box, {x:5, y:65}, factor*9);
+            generateAxis(svg_dynamic, {x:5, y:65}, factor*9);
             nl_dynamic.setAttribute('max', parseInt(nl_static.getAttribute('max'))/factor);
             if(!divide) {
                 nl_static.dispatchEvent(new Event('input'));
