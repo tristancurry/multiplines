@@ -116,6 +116,8 @@
             <svg width="500" height="500" version="1.1" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
                 <defs>
                  <path id="tickmark" d="m0 -5v10" fill="none" stroke="#000" stroke-linecap="square"/>
+                 <path id="indicator" d="m0 -20v10" fill="none" stroke="#ff0000" stroke-linecap="square"/>
+
                 </defs>
 
                 <g fill="none" id="svg_axes" stroke="#000">
@@ -139,6 +141,9 @@
         let factor = 3;
         let divide = false; 
 
+        const xmlns = 'http://www.w3.org/2000/svg';
+        const xlink = 'http://www.w3.org/1999/xlink';
+
         //give the sliders and their containing element a reference in code.
         //Variable names are the same as element id just for consistency,
         //it doesn't cause awkward collisions anywhere.
@@ -153,25 +158,29 @@
         const ticks_dynamic = svg_dynamic.getElementsByClassName('tickmarks')[0];
         const nl_dynamic = document.getElementById('nl_dynamic');
 
+        const indicator = document.createElementNS(xmlns, 'use');
+        indicator.setAttributeNS(xlink, 'xlink:href', '#indicator');
+        svg_box.appendChild(indicator);
+
         //set event listeners on the two sliders
         //if there were more sliders to synchronise, a loop over the input elements
         //in the containing div would be a good way to set these up.
         //NB: there's a difference between input.value, and the input's HTML 'value' attribute
         nl_static.addEventListener('input', event => {
             nl_dynamic.value = (1/factor)*nl_static.value;
-            // console.log(nl_static.value, nl_dynamic.value);
+            indicator.setAttribute('transform', `translate(${parseFloat(nl_dynamic.value + 5)*factor}, 65)`);
         });
 
         nl_dynamic.addEventListener('input', event => {
             nl_static.value = (factor)*nl_dynamic.value;
-            console.log(nl_static.value, nl_dynamic.value);
+            indicator.setAttribute('transform', `translate(${parseFloat(nl_dynamic.value + 5)*factor}, 65)`);
         });
 
         const sf = document.getElementById('sf');
         sf.addEventListener('input', event => {
             factor = parseFloat(sf.value);
             updateScaleFactor(factor);
-        })
+        });
 
         updateScaleFactor(2);
         generateTickmarks(ticks_static, {x:5, y:35});
@@ -195,8 +204,7 @@
 
         //this is used to produce the SVG axis with appropriate spacings and numbering of tick marks
         function generateTickmarks (target, origin={x:0, y:0}, spacing=9) {
-            const xmlns = 'http://www.w3.org/2000/svg';
-            const xlink = 'http://www.w3.org/1999/xlink';
+
 
             while (target.firstChild) {
                 target.firstChild.remove();
