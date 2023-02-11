@@ -39,14 +39,44 @@
         .range_overlay {
             position: absolute;
             display: block;
+
+            -webkit-appearance: none; /* Hides the slider so that custom slider can be made */
+            width: 100%; /* Specific width is required for Firefox. */
+            background: transparent; /* Otherwise white in Chrome */
+
             width: auto;
             padding: 0px;
             margin: 0px;
             box-sizing: border-box;
             height: 0px;
             top: 35%;
-            width: 93.4%;
+            width: 91%;
         }
+
+        .range_overlay::-webkit-slider-thumb {
+            -webkit-appearance:none;
+            /* border: 1px solid #000000; */
+            height: 100px;
+            width: 1%;
+            background: #09b668;
+            cursor: pointer;
+            margin-top: 0px;
+        }
+
+        .range_overlay:focus {
+            outline:auto;
+        }
+
+        .range_overlay::-ms-track {
+            width: 100%;
+            cursor: pointer;
+
+            /* Hides the slider so custom styles can be added */
+            background: transparent; 
+            border-color: transparent;
+            color: transparent;
+        }
+
 
         #nl_dynamic {
             top: 65%;
