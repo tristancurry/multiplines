@@ -202,7 +202,7 @@
         function updateScaleFactor(n) {
             factor = n;
             params_dynamic.spacing = factor*params_static.spacing;
-            generateTickmarks(ticks_dynamic, {x:params_dynamic.y, y:params_dynamic.y}, params_dynamic.spacing);
+            generateTickmarks(ticks_dynamic, {x:params_dynamic.x, y:params_dynamic.y}, params_dynamic.spacing);
             // nl_dynamic.setAttribute('max', parseInt(nl_static.getAttribute('max'))/factor);
             //have to set nl_dynamic to SOMETHING, just a percentage of the difference between axis max and min.
             if(!divide) {
@@ -210,10 +210,7 @@
             } else {
                 nl_static.dispatchEvent(new Event('input'));
             }
-
-            let statMinMax = axisMinMax
-
-
+            updateParams(params_dynamic);
         }
 
         //this is used to produce the SVG axis with appropriate spacings and numbering of tick marks
@@ -255,9 +252,17 @@
         //find current min and max on a scale...
         function axisMinMax(originX, spacing) {
             let spacings = 100/spacing;
+            console.log(spacings);
             let min = (0 - originX)/spacing;
             let max = (100 - originX)/spacing;
             return ({min, max});
+        }
+
+        function updateParams(params) {
+            let minmax = axisMinMax(params.x, params.spacing);
+            params.min = minmax.min;
+            params.max = minmax.max;
+            console.log(params);
         }
     </script>
 </body>
