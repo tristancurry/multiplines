@@ -139,7 +139,7 @@
                 
                </svg>
         </div>
-        <input type="range" id="sf" min="0.1" max="5" step="any" />
+        <input type="range" id="sf" min="0.1" max="10" step="0.1" />
     </div>
 
 
@@ -169,8 +169,8 @@
         indicator.setAttributeNS(xlink, 'xlink:href', '#indicator');
         svg_box.appendChild(indicator);
 
-        const params_static = {min:-1, max:11, x:10, y:35, spacing:9};
-        const params_dynamic = {min:-1, max:11, x:10, y:65, spacing:9};
+        const params_static = {min:-1, max:11, x:10, y:35, spacing:10};
+        const params_dynamic = {min:-1, max:11, x:10, y:65, spacing:10};
 
         //set event listeners on the two sliders
         //if there were more sliders to synchronise, a loop over the input elements
@@ -194,7 +194,7 @@
         });
         updateParams(params_dynamic);
         updateScaleFactor(factor);
-        generateTickmarks(ticks_static, {x:params_static.x, y:params_static.y}, params_static.spacing);
+        generateTickmarks(ticks_static, params_static);
         nl_static.value = 0;
         nl_static.dispatchEvent(new Event('input'));
 
@@ -204,7 +204,7 @@
 
             let currentMappedValue = map_value(nl_dynamic.value, 0, 100, params_dynamic.min, params_dynamic.max);
             params_dynamic.spacing = factor*params_static.spacing;
-            generateTickmarks(ticks_dynamic, {x:params_dynamic.x, y:params_dynamic.y}, params_dynamic.spacing);
+            generateTickmarks(ticks_dynamic, params_dynamic);
 
             updateParams(params_dynamic);
 
@@ -218,33 +218,46 @@
         }
 
         //this is used to produce the SVG axis with appropriate spacings and numbering of tick marks
-        function generateTickmarks (target, origin={x:0, y:0}, spacing=9) {
+        function generateTickmarks (target, params) {
 
             //remove existing tickmarks and numbers
             while (target.firstChild) {
                 target.firstChild.remove();
             }
 
-            let n_ticks = Math.floor((100 - origin.x)/spacing);
+            let inc = 1;
+            let spacing = params.spacing;
 
+            //if spacing is too big, inject intermediate tick marks...
+
+            while (spacing > 50) {
+                spacing = spacing/2;
+                inc = inc/2;
+            }
+
+            // while (spacing < 9) {
+            //     spacing = spacing*2;
+            //     inc = inc*2;
+            // }
+
+            let firstTick = inc*Math.ceil(params.min/inc);
+            let firstTickPos = map_value(firstTick, params.min, params.max, 0, 100);
+            let n_ticks = Math.floor((100 - firstTickPos)/spacing);
+            console.log(firstTick);
             //if the origin position is positive, we will need extra tick marks to cover the negative numbers visible on axis.
             //if the origin position is negative, we can reduce the number of tick marks drawn.
-             let offset = Math.floor(origin.x/spacing);
-
-             n_ticks+=offset;
 
             for (let i = 0; i <= n_ticks; i++) {
                 let tick = document.createElementNS(xmlns, 'use');
-                tick.setAttribute('transform', `translate(${origin.x - offset*spacing + i*spacing}, ${origin.y})`);
+                tick.setAttribute('transform', `translate(${firstTickPos + i*spacing}, ${params.y})`);
                 tick.setAttributeNS(xlink, 'xlink:href', '#tickmark');
                 target.appendChild(tick);
                 let num = document.createElementNS(xmlns, 'text');
                 num.setAttribute('class', 'ticknumber');
-                num.setAttribute('transform', `translate(${origin.x - offset -2 + i*spacing}, ${origin.y + 13})`);
-                num.insertAdjacentText('beforeend', `${i}`);
+                num.setAttribute('transform', `translate(${firstTickPos + i*spacing}, ${params.y + 13})`);
+                num.insertAdjacentText('beforeend', `${firstTick + i*inc}`);
                 target.appendChild(num);
             }
-
         }
 
         
