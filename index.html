@@ -144,7 +144,7 @@
 
 
     <script>
-        let factor = 3;
+        let factor = 2;
         let divide = false; 
 
         const xmlns = 'http://www.w3.org/2000/svg';
@@ -192,8 +192,8 @@
             factor = parseFloat(sf.value);
             updateScaleFactor(factor);
         });
-
-        updateScaleFactor(2);
+        updateParams(params_dynamic);
+        updateScaleFactor(factor);
         generateTickmarks(ticks_static, {x:params_static.x, y:params_static.y}, params_static.spacing);
         nl_static.value = 0;
         nl_static.dispatchEvent(new Event('input'));
@@ -201,26 +201,29 @@
         //this function does all the various things that need to happen whenever the scale factor is adjusted.
         function updateScaleFactor(n) {
             factor = n;
+
+            let currentMappedValue = map_value(nl_dynamic.value, 0, 100, params_dynamic.min, params_dynamic.max);
             params_dynamic.spacing = factor*params_static.spacing;
             generateTickmarks(ticks_dynamic, {x:params_dynamic.x, y:params_dynamic.y}, params_dynamic.spacing);
-            // nl_dynamic.setAttribute('max', parseInt(nl_static.getAttribute('max'))/factor);
-            //have to set nl_dynamic to SOMETHING, just a percentage of the difference between axis max and min.
+
+            updateParams(params_dynamic);
+
+            nl_dynamic.value = map_value(currentMappedValue, params_dynamic.min, params_dynamic.max, 0, 100);
+
             if(!divide) {
                 nl_dynamic.dispatchEvent(new Event('input'));
             } else {
                 nl_static.dispatchEvent(new Event('input'));
             }
-            updateParams(params_dynamic);
         }
 
         //this is used to produce the SVG axis with appropriate spacings and numbering of tick marks
         function generateTickmarks (target, origin={x:0, y:0}, spacing=9) {
 
-
+            //remove existing tickmarks and numbers
             while (target.firstChild) {
                 target.firstChild.remove();
             }
-
 
             let n_ticks = Math.floor((100 - origin.x)/spacing);
 
@@ -229,10 +232,6 @@
              let offset = Math.floor(origin.x/spacing);
 
              n_ticks+=offset;
-
-             console.log(n_ticks);
-
-
 
             for (let i = 0; i <= n_ticks; i++) {
                 let tick = document.createElementNS(xmlns, 'use');
@@ -252,17 +251,22 @@
         //find current min and max on a scale...
         function axisMinMax(originX, spacing) {
             let spacings = 100/spacing;
-            console.log(spacings);
             let min = (0 - originX)/spacing;
             let max = (100 - originX)/spacing;
             return ({min, max});
         }
 
+        //dispense new min and max to params object
         function updateParams(params) {
             let minmax = axisMinMax(params.x, params.spacing);
             params.min = minmax.min;
             params.max = minmax.max;
-            console.log(params);
+        }
+
+        //map a value on one range to its corresponding value on a new range
+        function map_value(value, min_old, max_old, min_new, max_new) {
+            let p = (value - min_old)/(max_old - min_old);
+            return (p*(max_new - min_new) + min_new);
         }
     </script>
 </body>
