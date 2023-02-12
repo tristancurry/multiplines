@@ -34,6 +34,7 @@
             justify-content: center;
             height: 100%;
             width: fit-content;
+            overflow:hidden;    
         }
 
         .range_overlay {
@@ -41,7 +42,6 @@
             display: block;
 
             -webkit-appearance: none; /* Hides the slider so that custom slider can be made */
-            width: 100%; /* Specific width is required for Firefox. */
             background: transparent; /* Otherwise white in Chrome */
 
             width: auto;
@@ -50,7 +50,7 @@
             box-sizing: border-box;
             height: 0px;
             top: 35%;
-            width: 91%;
+            width: 101%;
         }
 
         .range_overlay::-webkit-slider-thumb {
@@ -95,6 +95,12 @@
             color: transparent;
         }
 
+        .ticknumber {
+            font-size: 0.5em;
+            justify-content: center;
+            fill: black;
+            stroke: none;
+        }
 
         #nl_dynamic {
             top: 65%;
@@ -111,15 +117,15 @@
 
 
         <div id="layered">
-            <input type="range" class="range_overlay" id="nl_static" step="any" max="10">
-            <input type="range" class="range_overlay" id="nl_dynamic"  step="any" max="10">
+
+            <input type="range" class="range_overlay" id="nl_static" step="any" max="100">
+            <input type="range" class="range_overlay" id="nl_dynamic"  step="any" max="100">
             <svg width="500" height="500" version="1.1" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
                 <defs>
                  <path id="tickmark" d="m0 -5v10" fill="none" stroke="#000" stroke-linecap="square"/>
                  <path id="indicator" d="m0 -20v10" fill="none" stroke="#ff0000" stroke-linecap="square"/>
 
                 </defs>
-
                 <g fill="none" id="svg_axes" stroke="#000">
                     <g id="svg_static">
                         <path id="axis_static" d="m-25 35h150"/>
@@ -138,7 +144,7 @@
 
 
     <script>
-        let factor = 3;
+        let factor = 2;
         let divide = false; 
 
         const xmlns = 'http://www.w3.org/2000/svg';
@@ -159,21 +165,26 @@
         const nl_dynamic = document.getElementById('nl_dynamic');
 
         const indicator = document.createElementNS(xmlns, 'use');
+
         indicator.setAttributeNS(xlink, 'xlink:href', '#indicator');
         svg_box.appendChild(indicator);
+
+        const params_static = {min:-1, max:11, x:10, y:35, spacing:9};
+        const params_dynamic = {min:-1, max:11, x:10, y:65, spacing:9};
 
         //set event listeners on the two sliders
         //if there were more sliders to synchronise, a loop over the input elements
         //in the containing div would be a good way to set these up.
         //NB: there's a difference between input.value, and the input's HTML 'value' attribute
         nl_static.addEventListener('input', event => {
-            nl_dynamic.value = (1/factor)*nl_static.value;
-            indicator.setAttribute('transform', `translate(${parseFloat(nl_dynamic.value + 5)*factor}, 65)`);
+            nl_dynamic.value = nl_static.value;
+            indicator.setAttribute('transform', `translate(${nl_dynamic.value}, 65)`);
         });
 
         nl_dynamic.addEventListener('input', event => {
-            nl_static.value = (factor)*nl_dynamic.value;
-            indicator.setAttribute('transform', `translate(${parseFloat(nl_dynamic.value + 5)*factor}, 65)`);
+            nl_static.value = nl_dynamic.value;
+            indicator.setAttribute('transform', `translate(${nl_dynamic.value}, 65)`);
+
         });
 
         const sf = document.getElementById('sf');
@@ -181,47 +192,82 @@
             factor = parseFloat(sf.value);
             updateScaleFactor(factor);
         });
-
-        updateScaleFactor(2);
-        generateTickmarks(ticks_static, {x:5, y:35});
+        updateParams(params_dynamic);
+        updateScaleFactor(factor);
+        generateTickmarks(ticks_static, {x:params_static.x, y:params_static.y}, params_static.spacing);
         nl_static.value = 0;
         nl_static.dispatchEvent(new Event('input'));
 
         //this function does all the various things that need to happen whenever the scale factor is adjusted.
         function updateScaleFactor(n) {
             factor = n;
-    
-            generateTickmarks(ticks_dynamic, {x:5, y:65}, factor*9);
-            nl_dynamic.setAttribute('max', parseInt(nl_static.getAttribute('max'))/factor);
+
+            let currentMappedValue = map_value(nl_dynamic.value, 0, 100, params_dynamic.min, params_dynamic.max);
+            params_dynamic.spacing = factor*params_static.spacing;
+            generateTickmarks(ticks_dynamic, {x:params_dynamic.x, y:params_dynamic.y}, params_dynamic.spacing);
+
+            updateParams(params_dynamic);
+
+            nl_dynamic.value = map_value(currentMappedValue, params_dynamic.min, params_dynamic.max, 0, 100);
+
             if(!divide) {
                 nl_dynamic.dispatchEvent(new Event('input'));
             } else {
                 nl_static.dispatchEvent(new Event('input'));
             }
-
-
         }
 
         //this is used to produce the SVG axis with appropriate spacings and numbering of tick marks
         function generateTickmarks (target, origin={x:0, y:0}, spacing=9) {
 
-
+            //remove existing tickmarks and numbers
             while (target.firstChild) {
                 target.firstChild.remove();
             }
 
+            let n_ticks = Math.floor((100 - origin.x)/spacing);
 
-            let n_ticks = Math.floor(100/spacing);
+            //if the origin position is positive, we will need extra tick marks to cover the negative numbers visible on axis.
+            //if the origin position is negative, we can reduce the number of tick marks drawn.
+             let offset = Math.floor(origin.x/spacing);
+
+             n_ticks+=offset;
+
             for (let i = 0; i <= n_ticks; i++) {
                 let tick = document.createElementNS(xmlns, 'use');
-                tick.setAttribute('transform', `translate(${origin.x + i*spacing}, ${origin.y})`);
+                tick.setAttribute('transform', `translate(${origin.x - offset*spacing + i*spacing}, ${origin.y})`);
                 tick.setAttributeNS(xlink, 'xlink:href', '#tickmark');
                 target.appendChild(tick);
+                let num = document.createElementNS(xmlns, 'text');
+                num.setAttribute('class', 'ticknumber');
+                num.setAttribute('transform', `translate(${origin.x - offset -2 + i*spacing}, ${origin.y + 13})`);
+                num.insertAdjacentText('beforeend', `${i}`);
+                target.appendChild(num);
             }
 
         }
 
         
+        //find current min and max on a scale...
+        function axisMinMax(originX, spacing) {
+            let spacings = 100/spacing;
+            let min = (0 - originX)/spacing;
+            let max = (100 - originX)/spacing;
+            return ({min, max});
+        }
+
+        //dispense new min and max to params object
+        function updateParams(params) {
+            let minmax = axisMinMax(params.x, params.spacing);
+            params.min = minmax.min;
+            params.max = minmax.max;
+        }
+
+        //map a value on one range to its corresponding value on a new range
+        function map_value(value, min_old, max_old, min_new, max_new) {
+            let p = (value - min_old)/(max_old - min_old);
+            return (p*(max_new - min_new) + min_new);
+        }
     </script>
 </body>
 </html>
