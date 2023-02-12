@@ -169,8 +169,8 @@
         indicator.setAttributeNS(xlink, 'xlink:href', '#indicator');
         svg_box.appendChild(indicator);
 
-        const params_static = {min:-1, max:11, y:35};
-        const params_dynamic = {min:-1, max:11, y:65};
+        const params_static = {min:-1, max:11, x:10, y:35, spacing:9};
+        const params_dynamic = {min:-1, max:11, x:10, y:65, spacing:9};
 
         //set event listeners on the two sliders
         //if there were more sliders to synchronise, a loop over the input elements
@@ -194,15 +194,15 @@
         });
 
         updateScaleFactor(2);
-        generateTickmarks(ticks_static, {x:10, y:params_static.y});
+        generateTickmarks(ticks_static, {x:params_static.x, y:params_static.y}, params_static.spacing);
         nl_static.value = 0;
         nl_static.dispatchEvent(new Event('input'));
 
         //this function does all the various things that need to happen whenever the scale factor is adjusted.
         function updateScaleFactor(n) {
             factor = n;
-    
-            generateTickmarks(ticks_dynamic, {x:10, y:params_dynamic.y}, 9*factor);
+            params_dynamic.spacing = factor*params_static.spacing;
+            generateTickmarks(ticks_dynamic, {x:params_dynamic.y, y:params_dynamic.y}, params_dynamic.spacing);
             // nl_dynamic.setAttribute('max', parseInt(nl_static.getAttribute('max'))/factor);
             //have to set nl_dynamic to SOMETHING, just a percentage of the difference between axis max and min.
             if(!divide) {
@@ -210,6 +210,8 @@
             } else {
                 nl_static.dispatchEvent(new Event('input'));
             }
+
+            let statMinMax = axisMinMax
 
 
         }
@@ -253,14 +255,9 @@
         //find current min and max on a scale...
         function axisMinMax(originX, spacing) {
             let spacings = 100/spacing;
-            // origin + ?*spacing = 0; so (0 - origin)/spacing = ?
-            // origin + ??*spacing = 100; (100 - origin)/spacing = ??
-
             let min = (0 - originX)/spacing;
             let max = (100 - originX)/spacing;
-
             return ({min, max});
-
         }
     </script>
 </body>
