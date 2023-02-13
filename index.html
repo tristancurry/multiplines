@@ -97,9 +97,9 @@
 
         .ticknumber {
             font-size: 0.5em;
-            justify-content: center;
             fill: black;
             stroke: none;
+            text-anchor:middle;
         }
 
         #nl_dynamic {
@@ -192,9 +192,10 @@
             factor = parseFloat(sf.value);
             updateScaleFactor(factor);
         });
+        updateParams(params_static);
+        generateTickmarks(ticks_static, params_static);
         updateParams(params_dynamic);
         updateScaleFactor(factor);
-        generateTickmarks(ticks_static, params_static);
         nl_static.value = 0;
         nl_static.dispatchEvent(new Event('input'));
 
@@ -204,9 +205,9 @@
 
             let currentMappedValue = map_value(nl_dynamic.value, 0, 100, params_dynamic.min, params_dynamic.max);
             params_dynamic.spacing = factor*params_static.spacing;
+            updateParams(params_dynamic);
             generateTickmarks(ticks_dynamic, params_dynamic);
 
-            updateParams(params_dynamic);
 
             nl_dynamic.value = map_value(currentMappedValue, params_dynamic.min, params_dynamic.max, 0, 100);
 
@@ -235,17 +236,15 @@
                 inc = inc/2;
             }
 
-            // while (spacing < 9) {
-            //     spacing = spacing*2;
-            //     inc = inc*2;
-            // }
+            while (spacing < 5) {
+                spacing = spacing*2;
+                inc = inc*2;
+            }
 
             let firstTick = inc*Math.ceil(params.min/inc);
             let firstTickPos = map_value(firstTick, params.min, params.max, 0, 100);
             let n_ticks = Math.floor((100 - firstTickPos)/spacing);
-            console.log(firstTick);
-            //if the origin position is positive, we will need extra tick marks to cover the negative numbers visible on axis.
-            //if the origin position is negative, we can reduce the number of tick marks drawn.
+
 
             for (let i = 0; i <= n_ticks; i++) {
                 let tick = document.createElementNS(xmlns, 'use');
@@ -257,6 +256,7 @@
                 num.setAttribute('transform', `translate(${firstTickPos + i*spacing}, ${params.y + 13})`);
                 num.insertAdjacentText('beforeend', `${firstTick + i*inc}`);
                 target.appendChild(num);
+                console.log(num.clientWidth);
             }
         }
 
