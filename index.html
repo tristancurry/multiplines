@@ -19,10 +19,6 @@
             width: 100%;
         }
 
-        svg {
-            /* width: 100%; */
-        }
-
         #numberlines {
             position: relative;
             width: 75%;
@@ -37,6 +33,13 @@
             overflow:hidden;    
         }
 
+        input[type="range"] {
+            touch-action: none;
+        }
+
+        text {
+            user-select: none;
+        }
         .range_overlay {
             position: absolute;
             display: block;
@@ -49,7 +52,7 @@
             margin: 0px;
             box-sizing: border-box;
             height: 0px;
-            top: 35%;
+            top: 30%;
             width: 101%;
         }
 
@@ -96,18 +99,22 @@
         }
 
         .ticknumber {
-            font-size: 0.5em;
+            font-size: 0.4em;
             fill: black;
             stroke: none;
             text-anchor:middle;
         }
 
         #nl_dynamic {
-            top: 65%;
+            top: 70%;
         }
 
         #svg_axes {
             stroke-width: 0.75px;
+        }
+
+        #sf {
+            width: 500px;
         }
 
     </style>
@@ -118,8 +125,8 @@
 
         <div id="layered">
 
-            <input type="range" class="range_overlay" id="nl_static" step="any" max="100">
-            <input type="range" class="range_overlay" id="nl_dynamic"  step="any" max="100">
+            <input type="range" class="range_overlay" id="nl_static" step="any" max="100" value="0">
+            <input type="range" class="range_overlay" id="nl_dynamic"  step="any" max="100" value="0">
             <svg width="500" height="500" version="1.1" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
                 <defs>
                  <path id="tickmark" d="m0 -5v10" fill="none" stroke="#000" stroke-linecap="square"/>
@@ -128,23 +135,23 @@
                 </defs>
                 <g fill="none" id="svg_axes" stroke="#000">
                     <g id="svg_static">
-                        <path id="axis_static" d="m-25 35h150"/>
+                        <path id="axis_static" d="m-25 30h150"/>
                         <g class="tickmarks"></g>
                     </g>
                     <g id="svg_dynamic">
-                        <path id="axis_dynamic" d="m-25 65h150"/>
+                        <path id="axis_dynamic" d="m-25 70h150"/>
                         <g class="tickmarks"></g>
                     </g>
                 </g>
                 
                </svg>
         </div>
-        <input type="range" id="sf" min="0.1" max="10" step="0.1" />
+        <input type="range" id="sf" min="0.1" max="5" step="0.01" />
     </div>
 
 
     <script>
-        let factor = 2;
+        let factor = 1;
         let divide = false; 
 
         const xmlns = 'http://www.w3.org/2000/svg';
@@ -153,58 +160,97 @@
         //give the sliders and their containing element a reference in code.
         //Variable names are the same as element id just for consistency,
         //it doesn't cause awkward collisions anywhere.
+        //some of the repetitive parts here could be handled by a loop over elements
         const numberlines = document.getElementById('numberlines');
         const svg_box = document.getElementsByTagName('svg')[0];
+        let svg_vals = svg_box.viewBox.baseVal;
 
         const svg_static = document.getElementById('svg_static');
+        const axis_static = document.getElementById('axis_static');
         const ticks_static = svg_static.getElementsByClassName('tickmarks')[0];
         const nl_static = document.getElementById('nl_static');
 
         const svg_dynamic = document.getElementById('svg_dynamic');
+        const axis_dynamic = document.getElementById('axis_dynamic');
         const ticks_dynamic = svg_dynamic.getElementsByClassName('tickmarks')[0];
         const nl_dynamic = document.getElementById('nl_dynamic');
+
+        const sf = document.getElementById('sf');
+        sf.value = factor;
 
         const indicator = document.createElementNS(xmlns, 'use');
 
         indicator.setAttributeNS(xlink, 'xlink:href', '#indicator');
         svg_box.appendChild(indicator);
 
-        const params_static = {min:-1, max:11, x:10, y:35, spacing:10};
-        const params_dynamic = {min:-1, max:11, x:10, y:65, spacing:10};
+        const params_static = {min:-1, max:11, x:20, y:35, spacing:9, reverse:false};
+        const params_dynamic = {min:-1, max:11, x:20, y:65, spacing:10, reverse:false};
+
+        //now make sure the axes and sliders are aligned with these params...
+        axis_static.setAttribute('d', `m-25 ${params_static.y}h150`);
+        axis_dynamic.setAttribute('d', `m-25 ${params_dynamic.y}h150`);
+        
+        nl_static.style.top = `${params_static.y}%`;
+        nl_dynamic.style.top = `${params_dynamic.y}%`;
+
 
         //set event listeners on the two sliders
         //if there were more sliders to synchronise, a loop over the input elements
         //in the containing div would be a good way to set these up.
         //NB: there's a difference between input.value, and the input's HTML 'value' attribute
         nl_static.addEventListener('input', event => {
+            if (nl_static.value > 99) {nl_static.value = 99;} else
+            if (nl_static.value < 1) {nl_static.value = 1;} 
             nl_dynamic.value = nl_static.value;
             indicator.setAttribute('transform', `translate(${nl_dynamic.value}, 65)`);
         });
 
         nl_dynamic.addEventListener('input', event => {
+            if (nl_dynamic.value > 99) {nl_dynamic.value = 99;} else
+            if (nl_dynamic.value < 1) {nl_dynamic.value = 1;} 
             nl_static.value = nl_dynamic.value;
             indicator.setAttribute('transform', `translate(${nl_dynamic.value}, 65)`);
 
         });
 
-        const sf = document.getElementById('sf');
+        //set event listener on the scale-factor slider
         sf.addEventListener('input', event => {
             factor = parseFloat(sf.value);
             updateScaleFactor(factor);
         });
+
+
+        //initial setup based on static and dynamic parameters (primarily static 'spacing' and 0 position (origin.x))
         updateParams(params_static);
         generateTickmarks(ticks_static, params_static);
+
         updateParams(params_dynamic);
         updateScaleFactor(factor);
-        nl_static.value = 0;
+        
+        nl_static.value = map_value(0, params_static.min, params_static.max, 0, 100);
         nl_static.dispatchEvent(new Event('input'));
+
+////FUNCTIONS
 
         //this function does all the various things that need to happen whenever the scale factor is adjusted.
         function updateScaleFactor(n) {
             factor = n;
 
+            //this is clumsy - should just refuse to do anything that would require dividing by zero instead.
+            if(factor == 0) {
+                factor = 0.000001;
+            }
+
+
+            //this causes only a cosmetic change when rendering the axes - just plonks a negative sign out the front
+            if (factor < 0) {
+                params_dynamic.reverse = true;
+            } else {
+                params_dynamic.reverse = false;
+            }
+ 
             let currentMappedValue = map_value(nl_dynamic.value, 0, 100, params_dynamic.min, params_dynamic.max);
-            params_dynamic.spacing = factor*params_static.spacing;
+            params_dynamic.spacing = Math.abs(factor)*params_static.spacing;
             updateParams(params_dynamic);
             generateTickmarks(ticks_dynamic, params_dynamic);
 
@@ -229,16 +275,16 @@
             let inc = 1;
             let spacing = params.spacing;
 
+            //this spacing stuff is a bit hacky, and could be done better.
             //if spacing is too big, inject intermediate tick marks...
-
             while (spacing > 50) {
-                spacing = spacing/2;
-                inc = inc/2;
+                spacing = spacing/5;
+                inc = inc/5;
             }
-
-            while (spacing < 5) {
-                spacing = spacing*2;
-                inc = inc*2;
+            //if spacing is too tight, remove tick marks
+            while (spacing < 6) {
+                spacing = spacing*5;
+                inc = inc*5;
             }
 
             let firstTick = inc*Math.ceil(params.min/inc);
@@ -247,16 +293,34 @@
 
 
             for (let i = 0; i <= n_ticks; i++) {
+
+                //create a 'clone' of the tickmark path specified in the SVG 'defs' element
                 let tick = document.createElementNS(xmlns, 'use');
                 tick.setAttribute('transform', `translate(${firstTickPos + i*spacing}, ${params.y})`);
                 tick.setAttributeNS(xlink, 'xlink:href', '#tickmark');
                 target.appendChild(tick);
+
+                //create SVG 'text' element for the corresponding number
                 let num = document.createElementNS(xmlns, 'text');
+                let rev = 1;
+                if (params.reverse == true) {rev = -1;}
                 num.setAttribute('class', 'ticknumber');
-                num.setAttribute('transform', `translate(${firstTickPos + i*spacing}, ${params.y + 13})`);
-                num.insertAdjacentText('beforeend', `${firstTick + i*inc}`);
+                num.insertAdjacentText('beforeend', `${Math.round(rev*10*(firstTick + i*inc))/10}`);
                 target.appendChild(num);
-                console.log(num.clientWidth);
+                
+                
+                //get bounding boxes of the tick mark and the number, to provide coordinate info
+                //for vertical positioning of numbers.
+                let tickBounds = tick.getBBox();
+                num.setAttribute('x', `${firstTickPos + i*spacing}`);
+                num.setAttribute('y', `${params.y + 0.5*tickBounds.height}`);
+                let numBounds = num.getBBox();
+                num.setAttribute('transform', `translate(0, ${0.8*numBounds.height})`);
+                //if the number will be rendered only partially, hide it. This is done with reference to the viewBox of
+                //the surrounding SVG element.
+                if (numBounds.x < svg_vals.x || numBounds.x + numBounds.width > svg_vals.x + svg_vals.width) {
+                    num.style.display = 'none';
+                }
             }
         }
 
