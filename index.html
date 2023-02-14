@@ -158,6 +158,13 @@
             stroke-width: 1px;
         }
 
+        #labels {
+            font-size: 0.25em;
+            text-anchor: middle;
+            text-align: center;
+        }
+
+
 
     </style>
 </head>
@@ -184,7 +191,12 @@
                     <g id="svg_dynamic">
                         <path id="axis_dynamic" d="m-25 70h150"/>
                         <g class="tickmarks"></g>
-                    </g>
+                    </g>    
+                </g>
+
+                <g id="labels">
+                    <text id="label_scale">Scale Factor</text>
+                    <text id="label_slider">Equation</text>
                 </g>
                 
                </svg>
@@ -225,6 +237,9 @@
         const ticks_dynamic = svg_dynamic.getElementsByClassName('tickmarks')[0];
         const nl_dynamic = document.getElementById('nl_dynamic');
 
+        const label_scale = document.getElementById('label_scale');
+        const label_slider = document.getElementById('label_slider');
+
         const sf = document.getElementById('sf');
         sf.value = factor;
            
@@ -244,6 +259,7 @@
         nl_static.style.setProperty('--t', `translateY(${axesGap/4}px)`);
         nl_dynamic.style.setProperty('--t', `translateY(${-1*axesGap/4}px)`);
 
+
         indicator.setAttribute('d', `m0 0v${params_dynamic.y - params_static.y}`);
 
         //set event listeners on the two sliders
@@ -255,6 +271,8 @@
             if (nl_static.value < 1) {nl_static.value = 1;} 
             nl_dynamic.value = nl_static.value;
             arrowhead_slider.setAttribute('transform', `translate(${nl_dynamic.value}, ${params_static.y})`);
+            label_slider.setAttribute('transform', `translate(${nl_dynamic.value}, ${0.5*(params_static.y + params_dynamic.y)}) rotate(90)`);
+            label_slider.childNodes[0].nodeValue = `${Math.sign(factor)*map_value(nl_dynamic.value, 0, 100, params_dynamic.min, params_dynamic.max).toFixed(2)} x ${factor.toFixed(2)} = ${map_value(nl_static.value, 0, 100, params_static.min, params_static.max).toFixed(2)}`;
         });
 
         nl_dynamic.addEventListener('input', event => {
@@ -262,6 +280,11 @@
             if (nl_dynamic.value < 1) {nl_dynamic.value = 1;} 
             nl_static.value = nl_dynamic.value;
             arrowhead_slider.setAttribute('transform', `translate(${nl_dynamic.value}, ${params_static.y})`);
+            label_slider.setAttribute('transform', `translate(${nl_dynamic.value}, ${0.5*(params_static.y + params_dynamic.y)}) rotate(90)`);
+            label_slider.childNodes[0].nodeValue = `${Math.sign(factor)*map_value(nl_dynamic.value, 0, 100, params_dynamic.min, params_dynamic.max).toFixed(2)} x ${factor.toFixed(2)} = ${map_value(nl_static.value, 0, 100, params_static.min, params_static.max).toFixed(2)}`;
+
+
+
         });
 
         //set event listener on the scale-factor slider
@@ -300,6 +323,8 @@
         arrowhead_slider.setAttributeNS(xlink, 'xlink:href', '#arrowhead');
         arrowhead_slider.setAttribute('transform', `translate(${nl_dynamic.value}, ${params_static.y})`);
         arrowhead_slider.setAttribute('id', 'arrowhead_slider');
+
+
 
         svg_box.prepend(indicator_zero, indicator_one, arrowhead_one, arrowhead_slider);
 
@@ -340,7 +365,8 @@
             //Update positions of UI elements. Really these could be grouped for convenience and lighter code.
             indicator_one.setAttribute('transform', `translate(${map_value(Math.sign(factor)*1, params_dynamic.min, params_dynamic.max, 0, 100)},${params_static.y})`);
             arrowhead_one.setAttribute('transform', `translate(${map_value(Math.sign(factor)*1, params_dynamic.min, params_dynamic.max, 0, 100)},${params_static.y})`);
-
+            label_scale.setAttribute('transform', `translate(${map_value(Math.sign(factor)*1, params_dynamic.min, params_dynamic.max, 0, 100)},${0.5*(params_static.y + params_dynamic.y)}) rotate(90)`);
+            label_scale.childNodes[0].nodeValue = `Scale factor = ${factor.toFixed(2)}`;
 
             if(!divide) {
                 nl_dynamic.dispatchEvent(new Event('input'));
