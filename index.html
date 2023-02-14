@@ -195,8 +195,8 @@
         indicator.setAttributeNS(xlink, 'xlink:href', '#indicator');
         svg_box.appendChild(indicator);
         
-        const params_static = {min:-1, max:11, x:20, y:20, spacing:9, reverse:false};
-        const params_dynamic = {min:-1, max:11, x:20, y:80, spacing:10, reverse:false};
+        const params_static = {min:-1, max:11, x:50, y:35, spacing:9, reverse:false};
+        const params_dynamic = {min:-1, max:11, x:50, y:65, spacing:10, reverse:false};
         
         //now make sure the axes and sliders are aligned with these params...
         axis_static.setAttribute('d', `m-25 ${params_static.y}h150`);
@@ -267,10 +267,29 @@
             //this causes only a cosmetic change when rendering the axes - just plonks a negative sign out the front
             //gonna need to do something with the 'currentMappedValue' so that the slider tracks into the correct side of zero.
             if (factor < 0) {
-                params_dynamic.reverse = true;
+                if(params_dynamic.reverse == false) {
+                    params_dynamic.reverse = true;
+                    currentMappedValue *= -1;
+                }
             } else {
-                params_dynamic.reverse = false;
+                if(params_dynamic.reverse == true) {
+                    params_dynamic.reverse = false;
+                    currentMappedValue *= -1;
+                }
             }
+
+            //case 1: cmv is positive, and scale factor goes pos->neg
+            ////..then cmv is positive, and now must be rendered negative
+            //case 2: cmv is positive, and scale factor goes neg->pos
+            ////...then cmv is actually negative, and now must be rendered negative
+            //case 3: cmv is negative, and scale factor goes pos->neg
+            ////...then cmv is actually negative, and must be rendered positive
+            //case 4: cmv is negative, and scale factor goes neg->pos
+            ////...then cmv is actually positive, and must now be rendered positive
+
+            //check for transitions from pos to neg based on 'reverse' status, and previous factor
+
+
             nl_dynamic.value = map_value(currentMappedValue, params_dynamic.min, params_dynamic.max, 0, 100);
 
             if(!divide) {
