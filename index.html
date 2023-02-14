@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Multiplines</title>
     <style>
+        :root {
+            --thumb-colour: rgb(0, 145, 255);
+        }
 
         input {
             display: block;
@@ -15,6 +18,11 @@
         svg {
             z-index: 1;
             pointer-events: none;
+        }
+
+        svg path {
+            stroke: inherit;
+            stroke-dasharray: inherit;
         }
 
         datalist {
@@ -62,10 +70,9 @@
 
         .range_overlay::-webkit-slider-thumb {
             -webkit-appearance:none;
-            /* border: 1px solid #000000; */
             height: var(--h, 100px);
             width: 1%;
-            background: #09b668;
+            background: var(--thumb-colour);
             cursor: pointer;
             margin-top: 0px;
         }
@@ -73,7 +80,7 @@
         .range_overlay::-moz-range-thumb {
             height: var(--h, 100px);
             width: 1%;
-            background: #09b668;
+            background: var(--thumb-colour);
             cursor: pointer;
             margin-top: 0px;
             border-radius: 0px;
@@ -83,7 +90,7 @@
         .range_overlay::-ms-thumb {
             height: var(--h, 100px);
             width: 1%;
-            background: #09b668;
+            background: var(--thumb-colour);
             cursor: pointer;
             margin-top: 0px;
         }
@@ -124,6 +131,22 @@
         text {
             user-select: none;
         }
+        
+        #indicator {
+            /* stroke:rgb(70, 70, 70); */
+            stroke-width: 0.5px;
+        }
+        
+        #indicator_zero {
+            stroke: rgb(180, 180, 180);
+            stroke-dasharray: 1;
+            stroke-width: 0.5px;
+        }
+
+        #indicator_one {
+            stroke: rgb(255, 150, 150);
+        }
+
 
     </style>
 </head>
@@ -138,7 +161,7 @@
             <svg width="500" height="500" version="1.1" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
                 <defs>
                  <path id="tickmark" d="m0 -5v10" fill="none" stroke="#000" stroke-linecap="square"/>
-                 <path id="indicator" d="m0 -20v10" fill="none" stroke="#ff0000" stroke-linecap="square"/>
+                 <path id="indicator" d="m0 -20v10" fill="none" stroke-linecap="square"/>
 
                 </defs>
                 <g fill="none" id="svg_axes" stroke="#000">
@@ -174,6 +197,8 @@
         let svg_vals = svg_box.viewBox.baseVal;
 
         const indicator = document.getElementById('indicator');
+        const indicator_zero = document.createElementNS(xmlns, 'use');
+        const indicator_one = document.createElementNS(xmlns, 'use');
 
         const svg_static = document.getElementById('svg_static');
         const axis_static = document.getElementById('axis_static');
@@ -185,13 +210,15 @@
         const ticks_dynamic = svg_dynamic.getElementsByClassName('tickmarks')[0];
         const nl_dynamic = document.getElementById('nl_dynamic');
 
+
+
         const sf = document.getElementById('sf');
         sf.value = factor;
         
 
         
-        const params_static = {min:-1, max:11, x:50, y:35, spacing:9, reverse:false};
-        const params_dynamic = {min:-1, max:11, x:50, y:65, spacing:10, reverse:false};
+        const params_static = {min:-1, max:11, x:50, y:30, spacing:9, reverse:false};
+        const params_dynamic = {min:-1, max:11, x:50, y:70, spacing:10, reverse:false};
         
         //now make sure the axes and sliders are aligned with these params...
         axis_static.setAttribute('d', `m-25 ${params_static.y}h150`);
@@ -205,7 +232,7 @@
         let axesGap = svg_box.clientHeight*Math.abs(params_dynamic.y - params_static.y)/100;
         nl_static.style.setProperty('--h', `${axesGap}px`);
         nl_dynamic.style.setProperty('--h', `${axesGap}px`);
-        indicator.setAttribute('d', `m0 0v30`);
+        indicator.setAttribute('d', `m0 0v${params_dynamic.y - params_static.y}`);
 
         //set event listeners on the two sliders
         //if there were more sliders to synchronise, a loop over the input elements
@@ -240,17 +267,19 @@
         nl_static.value = map_value(0, params_static.min, params_static.max, 0, 100);
         nl_static.dispatchEvent(new Event('input'));
 
-        const indicator_zero = document.createElementNS(xmlns, 'use');
-        const indicator_one = document.createElementNS(xmlns, 'use');
+
 
         // indicator.setAttribute('d', `m${params_static.x} ${params_static.y}v40`);
         indicator_zero.setAttributeNS(xlink, 'xlink:href', '#indicator');
         indicator_zero.setAttribute('transform', `translate(${params_static.x}, ${params_static.y})`);
-        svg_box.appendChild(indicator_zero);
+        indicator_zero.setAttribute('id', 'indicator_zero');
+
 
         indicator_one.setAttributeNS(xlink, 'xlink:href', '#indicator');
         indicator_one.setAttribute('transform', `translate(${map_value(1, params_dynamic.min, params_dynamic.max, 0, 100)}, ${params_static.y})`);
-        svg_box.appendChild(indicator_one);
+        indicator_one.setAttribute('id', 'indicator_one');
+
+        svg_box.prepend(indicator_zero, indicator_one);
 
 ////FUNCTIONS
 
@@ -297,6 +326,8 @@
 
 
             nl_dynamic.value = map_value(currentMappedValue, params_dynamic.min, params_dynamic.max, 0, 100);
+
+            indicator_one.setAttribute('transform', `translate(${map_value(Math.sign(factor)*1, params_dynamic.min, params_dynamic.max, 0, 100)},${params_static.y})`);
 
             if(!divide) {
                 nl_dynamic.dispatchEvent(new Event('input'));
