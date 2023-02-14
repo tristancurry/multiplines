@@ -23,6 +23,7 @@
         svg path {
             stroke: inherit;
             stroke-dasharray: inherit;
+            stroke-width: inherit;
         }
 
         datalist {
@@ -71,6 +72,7 @@
         .range_overlay::-webkit-slider-thumb {
             -webkit-appearance:none;
             height: var(--h, 100px);
+            transform: var(--t, translateY(50px));
             width: 1%;
             background: var(--thumb-colour);
             cursor: pointer;
@@ -110,7 +112,7 @@
         }
 
         .ticknumber {
-            font-size: 0.4em;
+            font-size: 0.3em;
             fill: black;
             stroke: none;
             text-anchor:middle;
@@ -132,9 +134,8 @@
             user-select: none;
         }
         
-        #indicator {
-            /* stroke:rgb(70, 70, 70); */
-            stroke-width: 0.5px;
+        #indicator, #arrowhead {
+            /* stroke-width: 0.5px; */
         }
         
         #indicator_zero {
@@ -143,8 +144,14 @@
             stroke-width: 0.5px;
         }
 
-        #indicator_one {
+        #indicator_one, #arrowhead_one {
             stroke: rgb(255, 150, 150);
+            stroke-width: 0.5px;
+        }
+
+        #arrowhead_slider {
+            stroke: var(--thumb-colour);
+            stroke-width: 1px;
         }
 
 
@@ -154,7 +161,7 @@
     <div id="numberlines">
 
 
-        <div id="layered">
+        <div id="layered" draggable="false">
 
             <input type="range" class="range_overlay" id="nl_static" step="any" max="100" value="0">
             <input type="range" class="range_overlay" id="nl_dynamic"  step="any" max="100" value="0">
@@ -162,6 +169,7 @@
                 <defs>
                  <path id="tickmark" d="m0 -5v10" fill="none" stroke="#000" stroke-linecap="square"/>
                  <path id="indicator" d="m0 -20v10" fill="none" stroke-linecap="square"/>
+                 <path id="arrowhead" d="m -2.5 5 l 2.5 -5 l 2.5 5" fill="none" stroke-linejoin="round" stroke="#000"/>
 
                 </defs>
                 <g fill="none" id="svg_axes" stroke="#000">
@@ -200,6 +208,9 @@
         const indicator_zero = document.createElementNS(xmlns, 'use');
         const indicator_one = document.createElementNS(xmlns, 'use');
 
+        const arrowhead_one = document.createElementNS(xmlns, 'use');
+        const arrowhead_slider = document.createElementNS(xmlns, 'use');
+
         const svg_static = document.getElementById('svg_static');
         const axis_static = document.getElementById('axis_static');
         const ticks_static = svg_static.getElementsByClassName('tickmarks')[0];
@@ -230,8 +241,11 @@
         nl_dynamic.style.top = `${params_dynamic.y}%`;
         
         let axesGap = svg_box.clientHeight*Math.abs(params_dynamic.y - params_static.y)/100;
-        nl_static.style.setProperty('--h', `${axesGap}px`);
-        nl_dynamic.style.setProperty('--h', `${axesGap}px`);
+        nl_static.style.setProperty('--h', `${axesGap/2}px`);
+        nl_dynamic.style.setProperty('--h', `${axesGap/2}px`);
+        nl_static.style.setProperty('--t', `translateY(${axesGap/4}px)`);
+        nl_dynamic.style.setProperty('--t', `translateY(${-1*axesGap/4}px)`);
+
         indicator.setAttribute('d', `m0 0v${params_dynamic.y - params_static.y}`);
 
         //set event listeners on the two sliders
@@ -242,12 +256,14 @@
             if (nl_static.value > 99) {nl_static.value = 99;} else
             if (nl_static.value < 1) {nl_static.value = 1;} 
             nl_dynamic.value = nl_static.value;
+            arrowhead_slider.setAttribute('transform', `translate(${nl_dynamic.value}, ${params_static.y})`);
         });
 
         nl_dynamic.addEventListener('input', event => {
             if (nl_dynamic.value > 99) {nl_dynamic.value = 99;} else
             if (nl_dynamic.value < 1) {nl_dynamic.value = 1;} 
             nl_static.value = nl_dynamic.value;
+            arrowhead_slider.setAttribute('transform', `translate(${nl_dynamic.value}, ${params_static.y})`);
         });
 
         //set event listener on the scale-factor slider
@@ -279,7 +295,15 @@
         indicator_one.setAttribute('transform', `translate(${map_value(1, params_dynamic.min, params_dynamic.max, 0, 100)}, ${params_static.y})`);
         indicator_one.setAttribute('id', 'indicator_one');
 
-        svg_box.prepend(indicator_zero, indicator_one);
+        arrowhead_one.setAttributeNS(xlink, 'xlink:href', '#arrowhead');
+        arrowhead_one.setAttribute('transform', `translate(${map_value(1, params_dynamic.min, params_dynamic.max, 0, 100)}, ${params_static.y})`)
+        arrowhead_one.setAttribute('id', 'arrowhead_one');
+
+        arrowhead_slider.setAttributeNS(xlink, 'xlink:href', '#arrowhead');
+        arrowhead_slider.setAttribute('transform', `translate(${nl_dynamic.value}, ${params_static.y})`);
+        arrowhead_slider.setAttribute('id', 'arrowhead_slider');
+
+        svg_box.prepend(indicator_zero, indicator_one, arrowhead_one, arrowhead_slider);
 
 ////FUNCTIONS
 
@@ -328,6 +352,8 @@
             nl_dynamic.value = map_value(currentMappedValue, params_dynamic.min, params_dynamic.max, 0, 100);
 
             indicator_one.setAttribute('transform', `translate(${map_value(Math.sign(factor)*1, params_dynamic.min, params_dynamic.max, 0, 100)},${params_static.y})`);
+            arrowhead_one.setAttribute('transform', `translate(${map_value(Math.sign(factor)*1, params_dynamic.min, params_dynamic.max, 0, 100)},${params_static.y})`);
+
 
             if(!divide) {
                 nl_dynamic.dispatchEvent(new Event('input'));
@@ -349,12 +375,12 @@
 
             //this spacing stuff is a bit hacky, and could be done better.
             //if spacing is too big, inject intermediate tick marks...
-            while (spacing > 50) {
+            while (spacing > 40) {
                 spacing = spacing/5;
                 inc = inc/5;
             }
             //if spacing is too tight, remove tick marks
-            while (spacing < 6) {
+            while (spacing < 5) {
                 spacing = spacing*5;
                 inc = inc*5;
             }
