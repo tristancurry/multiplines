@@ -258,19 +258,19 @@
             }
 
 
-            //this causes only a cosmetic change when rendering the axes - just plonks a negative sign out the front
-            if (factor < 0) {
-                params_dynamic.reverse = true;
-            } else {
-                params_dynamic.reverse = false;
-            }
- 
+            
             let currentMappedValue = map_value(nl_dynamic.value, 0, 100, params_dynamic.min, params_dynamic.max);
             params_dynamic.spacing = Math.abs(factor)*params_static.spacing;
             updateParams(params_dynamic);
             generateTickmarks(ticks_dynamic, params_dynamic);
 
-
+            //this causes only a cosmetic change when rendering the axes - just plonks a negative sign out the front
+            //gonna need to do something with the 'currentMappedValue' so that the slider tracks into the correct side of zero.
+            if (factor < 0) {
+                params_dynamic.reverse = true;
+            } else {
+                params_dynamic.reverse = false;
+            }
             nl_dynamic.value = map_value(currentMappedValue, params_dynamic.min, params_dynamic.max, 0, 100);
 
             if(!divide) {
