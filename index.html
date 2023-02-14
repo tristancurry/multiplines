@@ -121,10 +121,6 @@
             width: 500px;
         }
 
-        #indicator {
-            display:none;
-        }
-
         text {
             user-select: none;
         }
@@ -177,6 +173,8 @@
         const svg_box = document.getElementsByTagName('svg')[0];
         let svg_vals = svg_box.viewBox.baseVal;
 
+        const indicator = document.getElementById('indicator');
+
         const svg_static = document.getElementById('svg_static');
         const axis_static = document.getElementById('axis_static');
         const ticks_static = svg_static.getElementsByClassName('tickmarks')[0];
@@ -190,10 +188,7 @@
         const sf = document.getElementById('sf');
         sf.value = factor;
         
-        const indicator = document.createElementNS(xmlns, 'use');
-        
-        indicator.setAttributeNS(xlink, 'xlink:href', '#indicator');
-        svg_box.appendChild(indicator);
+
         
         const params_static = {min:-1, max:11, x:50, y:35, spacing:9, reverse:false};
         const params_dynamic = {min:-1, max:11, x:50, y:65, spacing:10, reverse:false};
@@ -201,6 +196,8 @@
         //now make sure the axes and sliders are aligned with these params...
         axis_static.setAttribute('d', `m-25 ${params_static.y}h150`);
         axis_dynamic.setAttribute('d', `m-25 ${params_dynamic.y}h150`);
+
+
         
         nl_static.style.top = `${params_static.y}%`;
         nl_dynamic.style.top = `${params_dynamic.y}%`;
@@ -208,7 +205,7 @@
         let axesGap = svg_box.clientHeight*Math.abs(params_dynamic.y - params_static.y)/100;
         nl_static.style.setProperty('--h', `${axesGap}px`);
         nl_dynamic.style.setProperty('--h', `${axesGap}px`);
-
+        indicator.setAttribute('d', `m0 0v30`);
 
         //set event listeners on the two sliders
         //if there were more sliders to synchronise, a loop over the input elements
@@ -218,15 +215,12 @@
             if (nl_static.value > 99) {nl_static.value = 99;} else
             if (nl_static.value < 1) {nl_static.value = 1;} 
             nl_dynamic.value = nl_static.value;
-            indicator.setAttribute('transform', `translate(${nl_dynamic.value}, 65)`);
         });
 
         nl_dynamic.addEventListener('input', event => {
             if (nl_dynamic.value > 99) {nl_dynamic.value = 99;} else
             if (nl_dynamic.value < 1) {nl_dynamic.value = 1;} 
             nl_static.value = nl_dynamic.value;
-            indicator.setAttribute('transform', `translate(${nl_dynamic.value}, 65)`);
-
         });
 
         //set event listener on the scale-factor slider
@@ -245,6 +239,18 @@
         
         nl_static.value = map_value(0, params_static.min, params_static.max, 0, 100);
         nl_static.dispatchEvent(new Event('input'));
+
+        const indicator_zero = document.createElementNS(xmlns, 'use');
+        const indicator_one = document.createElementNS(xmlns, 'use');
+
+        // indicator.setAttribute('d', `m${params_static.x} ${params_static.y}v40`);
+        indicator_zero.setAttributeNS(xlink, 'xlink:href', '#indicator');
+        indicator_zero.setAttribute('transform', `translate(${params_static.x}, ${params_static.y})`);
+        svg_box.appendChild(indicator_zero);
+
+        indicator_one.setAttributeNS(xlink, 'xlink:href', '#indicator');
+        indicator_one.setAttribute('transform', `translate(${map_value(1, params_dynamic.min, params_dynamic.max, 0, 100)}, ${params_static.y})`);
+        svg_box.appendChild(indicator_one);
 
 ////FUNCTIONS
 
