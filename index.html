@@ -112,7 +112,7 @@
         }
 
         .ticknumber {
-            font-size: 0.3em;
+            font-size: 0.25em;
             fill: black;
             stroke: none;
             text-anchor:middle;
@@ -134,6 +134,10 @@
             user-select: none;
         }
         
+        #tickmark {
+            stroke-width: 0.5px;
+        }
+
         #indicator, #arrowhead {
             /* stroke-width: 0.5px; */
         }
@@ -167,7 +171,7 @@
             <input type="range" class="range_overlay" id="nl_dynamic"  step="any" max="100" value="0">
             <svg width="500" height="500" version="1.1" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
                 <defs>
-                 <path id="tickmark" d="m0 -5v10" fill="none" stroke="#000" stroke-linecap="square"/>
+                 <path id="tickmark" d="m0 -2.5v5" fill="none" stroke="#000" stroke-linecap="square"/>
                  <path id="indicator" d="m0 -20v10" fill="none" stroke-linecap="square"/>
                  <path id="arrowhead" d="m -2.5 5 l 2.5 -5 l 2.5 5" fill="none" stroke-linejoin="round" stroke="#000"/>
 
@@ -185,7 +189,7 @@
                 
                </svg>
         </div>
-        <input type="range" id="sf" min="-5" max="5" step="0.01" />
+        <input type="range" id="sf" min="-5" max="5" step="0.1" />
     </div>
 
 
@@ -221,22 +225,16 @@
         const ticks_dynamic = svg_dynamic.getElementsByClassName('tickmarks')[0];
         const nl_dynamic = document.getElementById('nl_dynamic');
 
-
-
         const sf = document.getElementById('sf');
         sf.value = factor;
-        
-
-        
+           
         const params_static = {min:-1, max:11, x:50, y:30, spacing:9, reverse:false};
         const params_dynamic = {min:-1, max:11, x:50, y:70, spacing:10, reverse:false};
         
         //now make sure the axes and sliders are aligned with these params...
         axis_static.setAttribute('d', `m-25 ${params_static.y}h150`);
         axis_dynamic.setAttribute('d', `m-25 ${params_dynamic.y}h150`);
-
-
-        
+    
         nl_static.style.top = `${params_static.y}%`;
         nl_dynamic.style.top = `${params_dynamic.y}%`;
         
@@ -313,7 +311,7 @@
 
             //this is clumsy - should just refuse to do anything that would require dividing by zero instead.
             if(factor == 0) {
-                factor = 0.000001;
+                factor = 0.1;
             }
 
 
@@ -337,20 +335,9 @@
                 }
             }
 
-            //case 1: cmv is positive, and scale factor goes pos->neg
-            ////..then cmv is positive, and now must be rendered negative
-            //case 2: cmv is positive, and scale factor goes neg->pos
-            ////...then cmv is actually negative, and now must be rendered negative
-            //case 3: cmv is negative, and scale factor goes pos->neg
-            ////...then cmv is actually negative, and must be rendered positive
-            //case 4: cmv is negative, and scale factor goes neg->pos
-            ////...then cmv is actually positive, and must now be rendered positive
-
-            //check for transitions from pos to neg based on 'reverse' status, and previous factor
-
-
             nl_dynamic.value = map_value(currentMappedValue, params_dynamic.min, params_dynamic.max, 0, 100);
 
+            //Update positions of UI elements. Really these could be grouped for convenience and lighter code.
             indicator_one.setAttribute('transform', `translate(${map_value(Math.sign(factor)*1, params_dynamic.min, params_dynamic.max, 0, 100)},${params_static.y})`);
             arrowhead_one.setAttribute('transform', `translate(${map_value(Math.sign(factor)*1, params_dynamic.min, params_dynamic.max, 0, 100)},${params_static.y})`);
 
@@ -375,7 +362,7 @@
 
             //this spacing stuff is a bit hacky, and could be done better.
             //if spacing is too big, inject intermediate tick marks...
-            while (spacing > 40) {
+            while (spacing > 45) {
                 spacing = spacing/5;
                 inc = inc/5;
             }
@@ -413,7 +400,7 @@
                 num.setAttribute('x', `${firstTickPos + i*spacing}`);
                 num.setAttribute('y', `${params.y + 0.5*tickBounds.height}`);
                 let numBounds = num.getBBox();
-                num.setAttribute('transform', `translate(0, ${0.8*numBounds.height})`);
+                num.setAttribute('transform', `translate(0, ${0.85*numBounds.height})`);
                 //if the number will be rendered only partially, hide it. This is done with reference to the viewBox of
                 //the surrounding SVG element.
                 if (numBounds.x < svg_vals.x || numBounds.x + numBounds.width > svg_vals.x + svg_vals.width) {
