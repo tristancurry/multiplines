@@ -15,12 +15,12 @@
 
             <input type="range" class="range_overlay" id="nl_static" step="any" max="100" value="0">
             <input type="range" class="range_overlay" id="nl_dynamic"  step="any" max="100" value="0">
-            <svg width="500" height="500" version="1.1" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+            <svg width="1000" height="1000" version="1.1" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
                 <defs>
-                 <path id="tickmark" d="m0 -2.5v5" fill="none" stroke="#000" stroke-linecap="square"/>
-                 <path id="indicator" d="m0 -20v10" fill="none" stroke-linecap="square"/>
-                 <path id="arrowhead" d="m -2.5 5 l 2.5 -5 l 2.5 5" fill="none" stroke-linejoin="round" stroke="#000"/>
-
+                    <path id="tickmark" d="m0 -2.5v5" fill="none" stroke="#000" stroke-linecap="square"/>
+                    <path id="indicator" d="m0 -20v10" fill="none" stroke-linecap="square"/>
+                    <path id="arrowhead" d="m -2.5 5 l 2.5 -5 l 2.5 5" fill="none" stroke-linejoin="round" stroke="#000"/>
+                    
                 </defs>
                 <g id="labels">
                     <text id="label_scale">Scale Factor</text>
@@ -36,10 +36,11 @@
                         <g class="tickmarks"></g>
                     </g>    
                 </g>
-
                 
-               </svg>
+                
+            </svg>
         </div>
+        
         <input type="range" id="sf" min="-5" max="5" step="0.1" />
     </div>
 
