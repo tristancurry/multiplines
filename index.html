@@ -75,7 +75,7 @@
             height: var(--h, 100px);
             transform: var(--t, translateY(50px));
             width: 1%;
-            background: var(--thumb-colour);
+            /* background: var(--thumb-colour); */
             cursor: pointer;
             margin-top: 0px;
         }
@@ -83,7 +83,7 @@
         .range_overlay::-moz-range-thumb {
             height: var(--h, 100px);
             width: 1%;
-            background: var(--thumb-colour);
+            /* background: var(--thumb-colour); */
             cursor: pointer;
             margin-top: 0px;
             border-radius: 0px;
@@ -93,7 +93,7 @@
         .range_overlay::-ms-thumb {
             height: var(--h, 100px);
             width: 1%;
-            background: var(--thumb-colour);
+            /* background: var(--thumb-colour); */
             cursor: pointer;
             margin-top: 0px;
         }
@@ -151,7 +151,7 @@
             stroke-width: 0.5px;
         }
 
-        #arrowhead_slider {
+        #indicator_slider, #arrowhead_slider {
             stroke: var(--thumb-colour);
             stroke-width: 1px;
         }
@@ -189,6 +189,10 @@
                  <path id="arrowhead" d="m -2.5 5 l 2.5 -5 l 2.5 5" fill="none" stroke-linejoin="round" stroke="#000"/>
 
                 </defs>
+                <g id="labels">
+                    <text id="label_scale">Scale Factor</text>
+                    <text id="label_slider">Equation</text>
+                </g>
                 <g fill="none" id="svg_axes" stroke="#000">
                     <g id="svg_static">
                         <path id="axis_static" d="m-25 30h150"/>
@@ -200,10 +204,6 @@
                     </g>    
                 </g>
 
-                <g id="labels">
-                    <text id="label_scale">Scale Factor</text>
-                    <text id="label_slider">Equation</text>
-                </g>
                 
                </svg>
         </div>
@@ -230,6 +230,7 @@
         const indicator = document.getElementById('indicator');
         const indicator_zero = document.createElementNS(xmlns, 'use');
         const indicator_one = document.createElementNS(xmlns, 'use');
+        const indicator_slider = document.createElementNS(xmlns, 'use');
 
         const arrowhead_one = document.createElementNS(xmlns, 'use');
         const arrowhead_slider = document.createElementNS(xmlns, 'use');
@@ -246,6 +247,11 @@
 
         const label_scale = document.getElementById('label_scale');
         const label_slider = document.getElementById('label_slider');
+        const label_group = document.getElementById('labels');
+
+        // const label_scale = document.createElementNS(xmlns, 'text');
+        // const label_slider = document.createElementNS(xmlns, 'text');
+        // const label_group = document.createElementNS(xmlns, 'g');
 
         const sf = document.getElementById('sf');
         sf.value = factor;
@@ -284,6 +290,7 @@
             }
             mappedValue = map_value(nl_dynamic.value, 0, 100, params_dynamic.min, params_dynamic.max);
             arrowhead_slider.setAttribute('transform', `translate(${nl_dynamic.value}, ${params_static.y})`);
+            indicator_slider.setAttribute('transform', `translate(${nl_dynamic.value}, ${params_static.y})`);
             label_slider.setAttribute('transform', `translate(${nl_dynamic.value}, ${0.5*(params_static.y + params_dynamic.y)}) rotate(90) translate(0, ${label_offset})`);
             label_slider.childNodes[0].nodeValue = `${roundToDP(Math.sign(factor)*mappedValue, 1)} x ${roundToDP(factor,1)} = ${roundToDP(Math.sign(factor)*mappedValue,1)*roundToDP(factor,1)}`;
             curtailNumber(label_slider, 2);
@@ -300,6 +307,8 @@
             }
             mappedValue = map_value(nl_dynamic.value, 0, 100, params_dynamic.min, params_dynamic.max);
             arrowhead_slider.setAttribute('transform', `translate(${nl_dynamic.value}, ${params_static.y})`);
+            indicator_slider.setAttribute('transform', `translate(${nl_dynamic.value}, ${params_static.y})`);
+
             label_slider.setAttribute('transform', `translate(${nl_dynamic.value}, ${0.5*(params_static.y + params_dynamic.y)}) rotate(90) translate(0, ${label_offset})`);
             label_slider.childNodes[0].nodeValue = `${roundToDP(Math.sign(factor)*mappedValue, 1)} x ${roundToDP(factor,1)} = ${roundToDP(Math.sign(factor)*mappedValue,1)*roundToDP(factor,1)}`;
             curtailNumber(label_slider, 2);
@@ -339,14 +348,30 @@
         arrowhead_one.setAttributeNS(xlink, 'xlink:href', '#arrowhead');
         arrowhead_one.setAttribute('transform', `translate(${map_value(1, params_dynamic.min, params_dynamic.max, 0, 100)}, ${params_static.y})`)
         arrowhead_one.setAttribute('id', 'arrowhead_one');
+        
+        indicator_slider.setAttributeNS(xlink, 'xlink:href', '#indicator');
+        indicator_slider.setAttribute('transform', `translate(${nl_dynamic.value}, ${params_static.y})`);
+        indicator_slider.setAttribute('id', 'indicator_slider');
 
         arrowhead_slider.setAttributeNS(xlink, 'xlink:href', '#arrowhead');
         arrowhead_slider.setAttribute('transform', `translate(${nl_dynamic.value}, ${params_static.y})`);
         arrowhead_slider.setAttribute('id', 'arrowhead_slider');
 
+        svg_box.prepend(indicator_zero, indicator_one, arrowhead_one, indicator_slider, arrowhead_slider);
 
+        // label_scale.setAttribute('id', 'label_scale');
+        // label_slider.setAttribute('id', 'label_slider');
+        // label_group.setAttribute('id', 'labels');
+        // label_group.append(label_scale, label_slider);
+        // svg_box.prepend(label_group);
 
-        svg_box.prepend(indicator_zero, indicator_one, arrowhead_one, arrowhead_slider);
+        
+////Prototypes
+////Things are getting too clunky, with too much repetitive code - the main code is getting hard to read.
+////Time to encapsulate some of the common elements as objects
+/////INDICATORS (vertical bars that go between axes. They can have an arrowhead at one or the other end)
+/////LABELS
+/////INPUT RANGE SLIDERS
 
 ////FUNCTIONS
 
