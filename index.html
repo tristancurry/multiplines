@@ -8,6 +8,7 @@
     <style>
         :root {
             --thumb-colour: rgb(0, 145, 255);
+            --sf-colour: rgb(255, 80, 80);
         }
 
         input {
@@ -132,7 +133,7 @@
 
         text {
             user-select: none;
-            font-family: Arial, Helvetica, sans-serif
+            font-family: Arial, Helvetica, sans-serif;
         }
         
         #tickmark {
@@ -146,7 +147,7 @@
         }
 
         #indicator_one, #arrowhead_one {
-            stroke: rgb(255, 150, 150);
+            stroke: var(--sf-colour);
             stroke-width: 0.5px;
         }
 
@@ -163,6 +164,10 @@
 
         #label_slider {
             fill: var(--thumb-colour);
+        }
+
+        #label_scale {
+            fill: var(--sf-colour);
         }
 
 
@@ -272,9 +277,14 @@
             if (nl_static.value > 99) {nl_static.value = 99;} else
             if (nl_static.value < 1) {nl_static.value = 1;} 
             nl_dynamic.value = nl_static.value;
+            let label_offset = -1;
+            let h = label_slider.getBBox().height;
+            if(100 - nl_dynamic.value  < h) {
+                label_offset= h;
+            }
             mappedValue = map_value(nl_dynamic.value, 0, 100, params_dynamic.min, params_dynamic.max);
             arrowhead_slider.setAttribute('transform', `translate(${nl_dynamic.value}, ${params_static.y})`);
-            label_slider.setAttribute('transform', `translate(${nl_dynamic.value}, ${0.5*(params_static.y + params_dynamic.y)}) rotate(90) translate(0, -1)`);
+            label_slider.setAttribute('transform', `translate(${nl_dynamic.value}, ${0.5*(params_static.y + params_dynamic.y)}) rotate(90) translate(0, ${label_offset})`);
             label_slider.childNodes[0].nodeValue = `${roundToDP(Math.sign(factor)*mappedValue, 1)} x ${roundToDP(factor,1)} = ${roundToDP(Math.sign(factor)*mappedValue,1)*roundToDP(factor,1)}`;
             curtailNumber(label_slider, 2);
         });
@@ -283,9 +293,14 @@
             if (nl_dynamic.value > 99) {nl_dynamic.value = 99;} else
             if (nl_dynamic.value < 1) {nl_dynamic.value = 1;} 
             nl_static.value = nl_dynamic.value;
+            let label_offset = -1;
+            let h = label_slider.getBBox().height;
+            if(100 - nl_dynamic.value  < h) {
+                label_offset= h;
+            }
             mappedValue = map_value(nl_dynamic.value, 0, 100, params_dynamic.min, params_dynamic.max);
             arrowhead_slider.setAttribute('transform', `translate(${nl_dynamic.value}, ${params_static.y})`);
-            label_slider.setAttribute('transform', `translate(${nl_dynamic.value}, ${0.5*(params_static.y + params_dynamic.y)}) rotate(90) translate(0, -1)`);
+            label_slider.setAttribute('transform', `translate(${nl_dynamic.value}, ${0.5*(params_static.y + params_dynamic.y)}) rotate(90) translate(0, ${label_offset})`);
             label_slider.childNodes[0].nodeValue = `${roundToDP(Math.sign(factor)*mappedValue, 1)} x ${roundToDP(factor,1)} = ${roundToDP(Math.sign(factor)*mappedValue,1)*roundToDP(factor,1)}`;
             curtailNumber(label_slider, 2);
 
@@ -370,7 +385,7 @@
             //Update positions of UI elements. Really these could be grouped for convenience and lighter code.
             indicator_one.setAttribute('transform', `translate(${map_value(Math.sign(factor)*1, params_dynamic.min, params_dynamic.max, 0, 100)},${params_static.y})`);
             arrowhead_one.setAttribute('transform', `translate(${map_value(Math.sign(factor)*1, params_dynamic.min, params_dynamic.max, 0, 100)},${params_static.y})`);
-            label_scale.setAttribute('transform', `translate(${map_value(Math.sign(factor)*1, params_dynamic.min, params_dynamic.max, 0, 100)},${0.5*(params_static.y + params_dynamic.y)}) rotate(90)`);
+            label_scale.setAttribute('transform', `translate(${map_value(Math.sign(factor)*1, params_dynamic.min, params_dynamic.max, 0, 100)},${0.5*(params_static.y + params_dynamic.y)}) rotate(90) translate(0, -1)`);
             label_scale.childNodes[0].nodeValue = `Scale factor = ${factor.toFixed(precision)}`;
 
             if(!divide) {
