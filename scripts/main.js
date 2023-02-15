@@ -1,19 +1,19 @@
 let factor = 1;
 let divide = false; 
-const precision = 1;
+const dpRounding = 1;
 
 const xmlns = 'http://www.w3.org/2000/svg';
 const xlink = 'http://www.w3.org/1999/xlink';
 
-//give the sliders and their containing element a reference in code.
-//Variable names are the same as element id just for consistency,
-//it doesn't cause awkward collisions anywhere.
-//some of the repetitive parts here could be handled by a loop over elements
+//give all relevant HTML/SVG elements a reference
+//there's probably some packaging into arrays and/or generation in JS that
+//could make this less wordy.
 const numberlines = document.getElementById('numberlines');
 const svg_box = document.getElementsByTagName('svg')[0];
+
 let svg_vals = svg_box.viewBox.baseVal;
 
-const indicator = document.getElementById('indicator');
+const indicator = document.getElementById('indicator'); //this one is the template for all indicators
 
 const indicator_zero = new Indicator(0, false, 'indicator_zero');
 const indicator_one = new Indicator(0, true, 'indicator_one');
@@ -38,9 +38,9 @@ const sf = document.getElementById('sf');
 sf.value = factor;
    
 const params_static = {min:-1, max:11, x:50, y:25, spacing:9, reverse:false};
-const params_dynamic = {min:-1, max:11, x:50, y:70, spacing:10, reverse:false};
+const params_dynamic = {x:50, y:70, reverse:false};
 
-//now make sure the axes and sliders are aligned with these params...
+//now make sure the axes, input ranges and indicators are visually aligned to these params...
 axis_static.setAttribute('d', `m-25 ${params_static.y}h150`);
 axis_dynamic.setAttribute('d', `m-25 ${params_dynamic.y}h150`);
 
@@ -64,34 +64,14 @@ nl_static.addEventListener('input', event => {
     if (nl_static.value > 99) {nl_static.value = 99;} else
     if (nl_static.value < 1) {nl_static.value = 1;} 
     nl_dynamic.value = nl_static.value;
-    let label_offset = -1;
-    let h = label_slider.getBBox().height;
-    if(100 - nl_dynamic.value  < h) {
-        label_offset= h;
-    }
-    mappedValue = map_value(nl_dynamic.value, 0, 100, params_dynamic.min, params_dynamic.max);
-    indicator_slider.update(nl_dynamic.value);
-    label_slider.setAttribute('transform', `translate(${nl_dynamic.value}, ${0.5*(params_static.y + params_dynamic.y)}) rotate(90) translate(0, ${label_offset})`);
-    label_slider.childNodes[0].nodeValue = `${roundToDP(Math.sign(factor)*mappedValue, 1)} x ${roundToDP(factor,1)} = ${roundToDP(Math.sign(factor)*mappedValue,1)*roundToDP(factor,1)}`;
-    curtailNumber(label_slider, 2);
+    updateSlider();
 });
 
 nl_dynamic.addEventListener('input', event => {
     if (nl_dynamic.value > 99) {nl_dynamic.value = 99;} else
     if (nl_dynamic.value < 1) {nl_dynamic.value = 1;} 
     nl_static.value = nl_dynamic.value;
-    let label_offset = -1;
-    let h = label_slider.getBBox().height;
-    if(100 - nl_dynamic.value  < h) {
-        label_offset= h;
-    }
-    mappedValue = map_value(nl_dynamic.value, 0, 100, params_dynamic.min, params_dynamic.max);
-    indicator_slider.update(nl_dynamic.value);
-    label_slider.setAttribute('transform', `translate(${nl_dynamic.value}, ${0.5*(params_static.y + params_dynamic.y)}) rotate(90) translate(0, ${label_offset})`);
-    label_slider.childNodes[0].nodeValue = `${roundToDP(Math.sign(factor)*mappedValue, 1)} x ${roundToDP(factor,1)} = ${roundToDP(Math.sign(factor)*mappedValue,1)*roundToDP(factor,1)}`;
-    curtailNumber(label_slider, 2);
-
-
+    updateSlider();
 });
 
 //set event listener on the scale-factor slider
@@ -111,8 +91,6 @@ updateScaleFactor(factor);
 nl_static.value = map_value(0, params_static.min, params_static.max, 0, 100);
 nl_static.dispatchEvent(new Event('input'));
 
-
-
 indicator_zero.y = params_static.y;
 indicator_zero.update(map_value(0, params_static.min, params_static.max, 0, 100));
 indicator_zero.render(svg_box);
@@ -124,6 +102,9 @@ indicator_one.render(svg_box);
 indicator_slider.y = params_static.y;
 indicator_slider.update(nl_dynamic.value);
 indicator_slider.render(svg_box);
+
+
+///FUNCTIONS
 
 //this function does all the various things that need to happen whenever the scale factor is adjusted.
 function updateScaleFactor(n) {
@@ -159,7 +140,7 @@ factor = n;
     indicator_one.update(map_value(Math.sign(factor)*1, params_dynamic.min, params_dynamic.max, 0, 100));
 
     label_scale.setAttribute('transform', `translate(${map_value(Math.sign(factor)*1, params_dynamic.min, params_dynamic.max, 0, 100)},${0.5*(params_static.y + params_dynamic.y)}) rotate(90) translate(0, -1)`);
-    label_scale.childNodes[0].nodeValue = `Scale factor = ${factor.toFixed(precision)}`;
+    label_scale.childNodes[0].nodeValue = `Scale factor = ${roundToDP(factor, dpRounding)}`;
 
     if(!divide) {
         nl_dynamic.dispatchEvent(new Event('input'));
@@ -242,6 +223,19 @@ function updateParams(params) {
     let minmax = axisMinMax(params.x, params.spacing);
     params.min = minmax.min;
     params.max = minmax.max;
+}
+
+function updateSlider() {
+    let label_offset = -1;
+    let h = label_slider.getBBox().height;
+    if(100 - nl_dynamic.value  < h) {
+        label_offset= h;
+    }
+    let mappedValue = map_value(nl_dynamic.value, 0, 100, params_dynamic.min, params_dynamic.max);
+    indicator_slider.update(nl_dynamic.value);
+    label_slider.setAttribute('transform', `translate(${nl_dynamic.value}, ${0.5*(params_static.y + params_dynamic.y)}) rotate(90) translate(0, ${label_offset})`);
+    label_slider.childNodes[0].nodeValue = `${roundToDP(Math.sign(factor)*mappedValue, dpRounding)} x ${roundToDP(factor, dpRounding)} = ${roundToDP(Math.sign(factor)*mappedValue, dpRounding)*roundToDP(factor, dpRounding)}`;
+    curtailNumber(label_slider, dpRounding + 1);
 }
 
 //map a value on one range to its corresponding value on a new range

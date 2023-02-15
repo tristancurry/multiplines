@@ -2,6 +2,21 @@
     --thumb-colour: rgb(0, 145, 255);
     --sf-colour: rgb(255, 80, 80);
 }
+html {
+
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    top:0;
+    left:0;
+    width:100%;
+    margin:0px;
+}
 
 input {
     display: block;
@@ -11,6 +26,8 @@ input {
 svg {
     z-index: 1;
     pointer-events: none;
+    width:100%;
+    height:auto;
 }
 
 svg path {
@@ -28,8 +45,13 @@ datalist {
 }
 
 #numberlines {
+    display:flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
     position: relative;
     width: 75%;
+
 }
 
 #layered {
@@ -120,7 +142,7 @@ input[type="range"] {
 }
 
 #sf {
-    width: 500px;
+    width: 90%
 }
 
 text {
