@@ -1,0 +1,185 @@
+:root {
+    --thumb-colour: rgb(0, 145, 255);
+    --sf-colour: rgb(255, 80, 80);
+}
+html {
+
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    top:0;
+    left:0;
+    width:100%;
+    margin:0px;
+}
+
+input {
+    display: block;
+    width: 100%;
+}
+
+svg {
+    z-index: 1;
+    pointer-events: none;
+    width:100%;
+    height:auto;
+}
+
+svg path {
+    stroke: inherit;
+    stroke-dasharray: inherit;
+    stroke-width: inherit;
+}
+
+datalist {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    writing-mode: vertical-lr;
+    width: 100%;
+}
+
+#numberlines {
+    display:flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    width: 75%;
+
+}
+
+#layered {
+    display: flex;
+    position: relative;
+    justify-content: center;
+    height: 100%;
+    width: fit-content;
+    overflow:hidden;    
+}
+
+input[type="range"] {
+    touch-action: none;
+}
+
+
+.range_overlay {
+    position: absolute;
+    display: block;
+
+    -webkit-appearance: none; /* Hides the slider so that custom slider can be made */
+    background: transparent; /* Otherwise white in Chrome */
+
+    width: auto;
+    padding: 0px;
+    margin: 0px;
+    box-sizing: border-box;
+    height: 0px;
+    top: 30%;
+    width: 101%;
+}
+
+.range_overlay::-webkit-slider-thumb {
+    -webkit-appearance:none;
+    height: var(--h, 100px);
+    transform: var(--t, translateY(50px));
+    width: 1%;
+    /* background: var(--thumb-colour); */
+    cursor: pointer;
+    margin-top: 0px;
+}
+
+.range_overlay::-moz-range-thumb {
+    height: var(--h, 100px);
+    width: 1%;
+    /* background: var(--thumb-colour); */
+    cursor: pointer;
+    margin-top: 0px;
+    border-radius: 0px;
+    border:none;
+}
+
+.range_overlay::-ms-thumb {
+    height: var(--h, 100px);
+    width: 1%;
+    /* background: var(--thumb-colour); */
+    cursor: pointer;
+    margin-top: 0px;
+}
+
+.range_overlay:focus {
+    outline:none;
+}
+
+.range_overlay::-ms-track {
+    width: 100%;
+    cursor: pointer;
+
+    /* Hides the slider so custom styles can be added */
+    background: transparent; 
+    border-color: transparent;
+    color: transparent;
+}
+
+.ticknumber {
+    font-size: 0.25em;
+    fill: black;
+    stroke: none;
+    text-anchor:middle;
+}
+
+#nl_dynamic {
+    top: 70%;
+}
+
+#svg_axes {
+    stroke-width: 0.75px;
+}
+
+#sf {
+    width: 90%
+}
+
+text {
+    user-select: none;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+#tickmark {
+    stroke-width: 0.5px;
+}
+
+.indicator_zero {
+    stroke: rgb(180, 180, 180);
+    stroke-dasharray: 1;
+    stroke-width: 0.5px;
+}
+
+.indicator_one {
+    stroke: var(--sf-colour);
+    stroke-width: 0.5px;
+}
+
+.indicator_slider {
+    stroke: var(--thumb-colour);
+    stroke-width: 1px;
+}
+
+#labels {
+    font-size: 0.22em;
+    text-anchor: middle;
+    text-align: center;
+}
+
+#label_slider {
+    fill: var(--thumb-colour);
+}
+
+#label_scale {
+    fill: var(--sf-colour);
+}
