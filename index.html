@@ -359,6 +359,11 @@
 
         svg_box.prepend(indicator_zero, indicator_one, arrowhead_one, indicator_slider, arrowhead_slider);
 
+        // const testInd = new Indicator(params_static.y, true, 'testIndy');
+        // testInd.render(svg_box);
+        // testInd.update(30);
+
+
         // label_scale.setAttribute('id', 'label_scale');
         // label_slider.setAttribute('id', 'label_slider');
         // label_group.setAttribute('id', 'labels');
@@ -369,116 +374,152 @@
 ////Prototypes
 ////Things are getting too clunky, with too much repetitive code - the main code is getting hard to read.
 ////Time to encapsulate some of the common elements as objects
-/////INDICATORS (vertical bars that go between axes. They can have an arrowhead at one or the other end)
+/////INDICATORS (vertical bars that go between axes. They can have an arrowhead at one or the other end, and may have a label. they may be associated with a range input)
+
+function Indicator (posY=0, arrow=false, className) {
+    this.x = 0;
+    this.y = posY;
+
+    this.elm = document.createElementNS(xmlns, 'use');
+    this.elm.setAttributeNS(xlink, 'xlink:href', '#indicator');
+    if(arrow == true) {
+        this.arrow = document.createElementNS(xmlns, 'use');
+        this.arrow.setAttributeNS(xlink, 'xlink:href', '#arrowhead');
+    }
+
+    if (className) {
+        this.elm.setAttribute('class', className);
+        if(this.arrow) {
+            this.arrow.setAttribute('class', className);
+        }
+    }
+    return this;
+}
+
+Indicator.prototype.update = function (posX) {
+    //update position
+    this.elm.setAttribute('transform', `translate(${posX}, ${this.y})`);
+    this.arrow.setAttribute('transform', `translate(${posX}, ${this.y})`);
+}
+
+Indicator.prototype.render = function (target) {
+    console.log('here!');
+    target.prepend(this.elm);
+    if(this.arrow) {
+        target.prepend(this.arrow);
+    }
+}
+
+
 /////LABELS
 /////INPUT RANGE SLIDERS
 
 ////FUNCTIONS
 
-        //this function does all the various things that need to happen whenever the scale factor is adjusted.
-        function updateScaleFactor(n) {
-            factor = n;
+    //this function does all the various things that need to happen whenever the scale factor is adjusted.
+    function updateScaleFactor(n) {
+        factor = n;
 
-            //this is clumsy - should just refuse to do anything that would require dividing by zero instead.
-            if(factor == 0) {
-                factor = 0.1;
+        //this is clumsy - should just refuse to do anything that would require dividing by zero instead.
+        if(factor == 0) {
+            factor = 0.1;
+        }
+
+
+        
+        let currentMappedValue = map_value(nl_dynamic.value, 0, 100, params_dynamic.min, params_dynamic.max);
+        params_dynamic.spacing = Math.abs(factor)*params_static.spacing;
+        updateParams(params_dynamic);
+        generateTickmarks(ticks_dynamic, params_dynamic);
+
+        //this causes only a cosmetic change when rendering the axes - just plonks a negative sign out the front
+        //gonna need to do something with the 'currentMappedValue' so that the slider tracks into the correct side of zero.
+        if (factor < 0) {
+            if(params_dynamic.reverse == false) {
+                params_dynamic.reverse = true;
+                currentMappedValue *= -1;
             }
+        } else {
+            if(params_dynamic.reverse == true) {
+                params_dynamic.reverse = false;
+                currentMappedValue *= -1;
+            }
+        }
+
+        nl_dynamic.value = map_value(currentMappedValue, params_dynamic.min, params_dynamic.max, 0, 100);
+
+        //Update positions of UI elements. Really these could be grouped for convenience and lighter code.
+        indicator_one.setAttribute('transform', `translate(${map_value(Math.sign(factor)*1, params_dynamic.min, params_dynamic.max, 0, 100)},${params_static.y})`);
+        arrowhead_one.setAttribute('transform', `translate(${map_value(Math.sign(factor)*1, params_dynamic.min, params_dynamic.max, 0, 100)},${params_static.y})`);
+        label_scale.setAttribute('transform', `translate(${map_value(Math.sign(factor)*1, params_dynamic.min, params_dynamic.max, 0, 100)},${0.5*(params_static.y + params_dynamic.y)}) rotate(90) translate(0, -1)`);
+        label_scale.childNodes[0].nodeValue = `Scale factor = ${factor.toFixed(precision)}`;
+
+        if(!divide) {
+            nl_dynamic.dispatchEvent(new Event('input'));
+        } else {
+            nl_static.dispatchEvent(new Event('input'));
+        }
+    }
+
+    //this is used to produce the SVG axis with appropriate spacings and numbering of tick marks
+    function generateTickmarks (target, params) {
+
+        //remove existing tickmarks and numbers
+        while (target.firstChild) {
+            target.firstChild.remove();
+        }
+
+        let inc = 1;
+        let spacing = params.spacing;
+
+        //this spacing stuff is a bit hacky, and could be done better.
+        //if spacing is too big, inject intermediate tick marks...
+        while (spacing > 45) {
+            spacing = spacing/5;
+            inc = inc/5;
+        }
+        //if spacing is too tight, remove tick marks
+        while (spacing < 5) {
+            spacing = spacing*5;
+            inc = inc*5;
+        }
+
+        let firstTick = inc*Math.ceil(params.min/inc);
+        let firstTickPos = map_value(firstTick, params.min, params.max, 0, 100);
+        let n_ticks = Math.floor((100 - firstTickPos)/spacing);
 
 
+        for (let i = 0; i <= n_ticks; i++) {
+
+            //create a 'clone' of the tickmark path specified in the SVG 'defs' element
+            let tick = document.createElementNS(xmlns, 'use');
+            tick.setAttribute('transform', `translate(${firstTickPos + i*spacing}, ${params.y})`);
+            tick.setAttributeNS(xlink, 'xlink:href', '#tickmark');
+            target.appendChild(tick);
+
+            //create SVG 'text' element for the corresponding number
+            let num = document.createElementNS(xmlns, 'text');
+            let rev = 1;
+            if (params.reverse == true) {rev = -1;}
+            num.setAttribute('class', 'ticknumber');
+            num.insertAdjacentText('beforeend', `${Math.round(rev*10*(firstTick + i*inc))/10}`);
+            target.appendChild(num);
             
-            let currentMappedValue = map_value(nl_dynamic.value, 0, 100, params_dynamic.min, params_dynamic.max);
-            params_dynamic.spacing = Math.abs(factor)*params_static.spacing;
-            updateParams(params_dynamic);
-            generateTickmarks(ticks_dynamic, params_dynamic);
-
-            //this causes only a cosmetic change when rendering the axes - just plonks a negative sign out the front
-            //gonna need to do something with the 'currentMappedValue' so that the slider tracks into the correct side of zero.
-            if (factor < 0) {
-                if(params_dynamic.reverse == false) {
-                    params_dynamic.reverse = true;
-                    currentMappedValue *= -1;
-                }
-            } else {
-                if(params_dynamic.reverse == true) {
-                    params_dynamic.reverse = false;
-                    currentMappedValue *= -1;
-                }
-            }
-
-            nl_dynamic.value = map_value(currentMappedValue, params_dynamic.min, params_dynamic.max, 0, 100);
-
-            //Update positions of UI elements. Really these could be grouped for convenience and lighter code.
-            indicator_one.setAttribute('transform', `translate(${map_value(Math.sign(factor)*1, params_dynamic.min, params_dynamic.max, 0, 100)},${params_static.y})`);
-            arrowhead_one.setAttribute('transform', `translate(${map_value(Math.sign(factor)*1, params_dynamic.min, params_dynamic.max, 0, 100)},${params_static.y})`);
-            label_scale.setAttribute('transform', `translate(${map_value(Math.sign(factor)*1, params_dynamic.min, params_dynamic.max, 0, 100)},${0.5*(params_static.y + params_dynamic.y)}) rotate(90) translate(0, -1)`);
-            label_scale.childNodes[0].nodeValue = `Scale factor = ${factor.toFixed(precision)}`;
-
-            if(!divide) {
-                nl_dynamic.dispatchEvent(new Event('input'));
-            } else {
-                nl_static.dispatchEvent(new Event('input'));
+            
+            //get bounding boxes of the tick mark and the number, to provide coordinate info
+            //for vertical positioning of numbers.
+            let tickBounds = tick.getBBox();
+            num.setAttribute('x', `${firstTickPos + i*spacing}`);
+            num.setAttribute('y', `${params.y + 0.5*tickBounds.height}`);
+            let numBounds = num.getBBox();
+            num.setAttribute('transform', `translate(0, ${0.85*numBounds.height})`);
+            //if the number will be rendered only partially, hide it. This is done with reference to the viewBox of
+            //the surrounding SVG element.
+            if (numBounds.x < svg_vals.x || numBounds.x + numBounds.width > svg_vals.x + svg_vals.width) {
+                num.style.display = 'none';
             }
         }
-
-        //this is used to produce the SVG axis with appropriate spacings and numbering of tick marks
-        function generateTickmarks (target, params) {
-
-            //remove existing tickmarks and numbers
-            while (target.firstChild) {
-                target.firstChild.remove();
-            }
-
-            let inc = 1;
-            let spacing = params.spacing;
-
-            //this spacing stuff is a bit hacky, and could be done better.
-            //if spacing is too big, inject intermediate tick marks...
-            while (spacing > 45) {
-                spacing = spacing/5;
-                inc = inc/5;
-            }
-            //if spacing is too tight, remove tick marks
-            while (spacing < 5) {
-                spacing = spacing*5;
-                inc = inc*5;
-            }
-
-            let firstTick = inc*Math.ceil(params.min/inc);
-            let firstTickPos = map_value(firstTick, params.min, params.max, 0, 100);
-            let n_ticks = Math.floor((100 - firstTickPos)/spacing);
-
-
-            for (let i = 0; i <= n_ticks; i++) {
-
-                //create a 'clone' of the tickmark path specified in the SVG 'defs' element
-                let tick = document.createElementNS(xmlns, 'use');
-                tick.setAttribute('transform', `translate(${firstTickPos + i*spacing}, ${params.y})`);
-                tick.setAttributeNS(xlink, 'xlink:href', '#tickmark');
-                target.appendChild(tick);
-
-                //create SVG 'text' element for the corresponding number
-                let num = document.createElementNS(xmlns, 'text');
-                let rev = 1;
-                if (params.reverse == true) {rev = -1;}
-                num.setAttribute('class', 'ticknumber');
-                num.insertAdjacentText('beforeend', `${Math.round(rev*10*(firstTick + i*inc))/10}`);
-                target.appendChild(num);
-                
-                
-                //get bounding boxes of the tick mark and the number, to provide coordinate info
-                //for vertical positioning of numbers.
-                let tickBounds = tick.getBBox();
-                num.setAttribute('x', `${firstTickPos + i*spacing}`);
-                num.setAttribute('y', `${params.y + 0.5*tickBounds.height}`);
-                let numBounds = num.getBBox();
-                num.setAttribute('transform', `translate(0, ${0.85*numBounds.height})`);
-                //if the number will be rendered only partially, hide it. This is done with reference to the viewBox of
-                //the surrounding SVG element.
-                if (numBounds.x < svg_vals.x || numBounds.x + numBounds.width > svg_vals.x + svg_vals.width) {
-                    num.style.display = 'none';
-                }
-            }
-        }
+    }
 
         
         //find current min and max on a scale...
