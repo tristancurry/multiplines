@@ -26,6 +26,7 @@ input {
 svg {
     z-index: 1;
     pointer-events: none;
+    user-select: none;
     width:100%;
     height:auto;
 }
