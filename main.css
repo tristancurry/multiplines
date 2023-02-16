@@ -3,7 +3,6 @@
     --sf-colour: rgb(255, 80, 80);
 }
 html {
-
 }
 
 body {
@@ -15,6 +14,8 @@ body {
     top:0;
     left:0;
     width:100%;
+    height: 100%;
+    overflow:hidden;
     margin:0px;
 }
 
@@ -52,15 +53,14 @@ datalist {
     align-items: center;
     position: relative;
     width: 75%;
-    height: 70%;
-
 }
 
 #layered {
     display: flex;
+    flex-direction: column;
     position: relative;
+    align-items: center;
     justify-content: center;
-    height: 100%;
     width: fit-content;
     overflow:hidden;    
 }
@@ -68,6 +68,8 @@ datalist {
 input[type="range"] {
     touch-action: none;
 }
+
+/*some of the following is to defeat default input range styles in different browsers */
 
 .range_overlay {
     position: absolute;
@@ -149,8 +151,6 @@ input[type="range"] {
 #svg_axes {
     stroke-width: 0.75px;
 }
-
-
 
 text {
     user-select: none;
