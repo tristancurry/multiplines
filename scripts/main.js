@@ -47,8 +47,8 @@ range_scale.setAttribute('max', `${params_static.max}`);
 axis_static.setAttribute('d', `m-25 ${params_static.y}h150`);
 axis_dynamic.setAttribute('d', `m-25 ${params_dynamic.y}h150`);
 
-range_eqn.style.top = `${params_static.y}%`;
-range_scale.style.top = `${params_static.y}%`;
+range_eqn.style.top = `${100*params_static.y/svg_vals.height}%`;
+range_scale.style.top = `${100*params_static.y/svg_vals.height}%`;
 
 let axesGap = svg_box.clientHeight*Math.abs(params_dynamic.y - params_static.y)/100;
 range_eqn.style.setProperty('--h', `${axesGap}px`);
