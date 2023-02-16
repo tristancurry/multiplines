@@ -68,7 +68,6 @@ input[type="range"] {
     touch-action: none;
 }
 
-
 .range_overlay {
     position: absolute;
     display: block;
@@ -79,7 +78,6 @@ input[type="range"] {
     margin: 0px;
     box-sizing: border-box;
     height: 0px;
-    top: 30%;
     width: 101%;
 }
 
@@ -88,27 +86,32 @@ input[type="range"] {
     height: var(--h, 100px);
     transform: var(--t, translateY(50px));
     width: 1%;
-    /* background: var(--thumb-colour); */
     cursor: pointer;
     margin-top: 0px;
+    pointer-events: auto !important;
+
 }
 
 .range_overlay::-moz-range-thumb {
     height: var(--h, 100px);
+    transform: var(--t, translateY(50px));
     width: 1%;
-    /* background: var(--thumb-colour); */
     cursor: pointer;
     margin-top: 0px;
     border-radius: 0px;
     border:none;
+    pointer-events: auto !important;
+    background: none;
 }
 
 .range_overlay::-ms-thumb {
     height: var(--h, 100px);
+    transform: var(--t, translateY(50px));
     width: 1%;
-    /* background: var(--thumb-colour); */
     cursor: pointer;
     margin-top: 0px;
+    pointer-events: auto !important;
+
 }
 
 .range_overlay:focus {
@@ -118,11 +121,20 @@ input[type="range"] {
 .range_overlay::-ms-track {
     width: 100%;
     cursor: pointer;
-
     /* Hides the slider so custom styles can be added */
     background: transparent; 
     border-color: transparent;
     color: transparent;
+}
+
+.range_overlay::-webkit-slider-runnable-track {
+    pointer-events: none;
+
+}
+
+.range_overlay::-moz-range-track {
+    pointer-events: none;
+
 }
 
 .ticknumber {
@@ -142,7 +154,6 @@ input[type="range"] {
 
 #sf {
     width: 90%;
-    background-color:aquamarine;
 }
 
 text {
