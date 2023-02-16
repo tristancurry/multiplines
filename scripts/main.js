@@ -1,6 +1,7 @@
-let factor = 1;
+let scale_factor = SCALE_FACTOR_DEFAULT;
 let divide = false; 
-const dpRounding = 1;
+const dpRounding = ROUNDING_DECIMAL_POINTS;
+let scaling = false;
 
 const xmlns = 'http://www.w3.org/2000/svg';
 const xlink = 'http://www.w3.org/1999/xlink';
@@ -22,66 +23,63 @@ const indicator_slider = new Indicator(0, true, 'indicator_slider');
 const svg_static = document.getElementById('svg_static');
 const axis_static = document.getElementById('axis_static');
 const ticks_static = svg_static.getElementsByClassName('tickmarks')[0];
-const nl_static = document.getElementById('nl_static');
+const range_eqn = document.getElementById('range_eqn');
 
 const svg_dynamic = document.getElementById('svg_dynamic');
 const axis_dynamic = document.getElementById('axis_dynamic');
 const ticks_dynamic = svg_dynamic.getElementsByClassName('tickmarks')[0];
-const nl_dynamic = document.getElementById('nl_dynamic');
 
 const label_scale = document.getElementById('label_scale');
 const label_slider = document.getElementById('label_slider');
 const label_group = document.getElementById('labels');
 
 
-const sf = document.getElementById('sf');
-sf.value = factor;
-   
-const params_static = {min:-1, max:11, x:50, y:25, spacing:9, reverse:false};
-const params_dynamic = {x:50, y:70, reverse:false};
+const range_scale = document.getElementById('range_scale');
+range_scale.value = scale_factor;
+
+const params_static = {min:STATIC_AXIS_MIN, max:STATIC_AXIS_MAX, x:map_value(0, STATIC_AXIS_MIN, STATIC_AXIS_MAX, 0, 100), y:STATIC_AXIS_Y, spacing:100/(STATIC_AXIS_MAX - STATIC_AXIS_MIN), reverse:false};
+const params_dynamic = {x:params_static.x, y:DYNAMIC_AXIS_Y, reverse:false};
+range_scale.setAttribute('min', `${params_static.min}`);
+range_scale.setAttribute('max', `${params_static.max}`);
+
 
 //now make sure the axes, input ranges and indicators are visually aligned to these params...
 axis_static.setAttribute('d', `m-25 ${params_static.y}h150`);
 axis_dynamic.setAttribute('d', `m-25 ${params_dynamic.y}h150`);
 
-nl_static.style.top = `${params_static.y}%`;
-nl_dynamic.style.top = `${params_dynamic.y}%`;
-sf.style.top = `${params_static.y}%`;
+range_eqn.style.top = `${params_static.y}%`;
+range_scale.style.top = `${params_static.y}%`;
 
 let axesGap = svg_box.clientHeight*Math.abs(params_dynamic.y - params_static.y)/100;
-nl_static.style.setProperty('--h', `${axesGap/2}px`);
-nl_dynamic.style.setProperty('--h', `${axesGap/2}px`);
-nl_static.style.setProperty('--t', `translateY(${axesGap/4}px)`);
-nl_dynamic.style.setProperty('--t', `translateY(${-1*axesGap/4}px)`);
-sf.style.setProperty('--h', `${axesGap}px`);
-sf.style.setProperty('--t', `translateY(${axesGap/2}px)`);
+range_eqn.style.setProperty('--h', `${axesGap}px`);
+range_eqn.style.setProperty('--t', `translateY(${axesGap/2}px)`);
+range_scale.style.setProperty('--h', `${axesGap}px`);
+range_scale.style.setProperty('--t', `translateY(${axesGap/2}px)`);
 
 
 
 indicator.setAttribute('d', `m0 0v${params_dynamic.y - params_static.y}`);
 
-//set event listeners on the two sliders
-//if there were more sliders to synchronise, a loop over the input elements
-//in the containing div would be a good way to set these up.
+//set event listeners on the equation slider
 //NB: there's a difference between input.value, and the input's HTML 'value' attribute
-nl_static.addEventListener('input', event => {
-    if (nl_static.value > 99) {nl_static.value = 99;} else
-    if (nl_static.value < 1) {nl_static.value = 1;} 
-    nl_dynamic.value = nl_static.value;
+range_eqn.addEventListener('input', event => { 
     updateSlider();
-});
-
-nl_dynamic.addEventListener('input', event => {
-    if (nl_dynamic.value > 99) {nl_dynamic.value = 99;} else
-    if (nl_dynamic.value < 1) {nl_dynamic.value = 1;} 
-    nl_static.value = nl_dynamic.value;
-    updateSlider();
+    if(scaling == false) {
+        //this is to prevent both sliders from being trapped together if they are manipulated while overlapping.
+        let r100 = map_value(range_scale.value, range_scale.min, range_scale.max, 0, 100);
+        if (range_eqn.value >= r100 - OVERLAP_TOLERANCE && range_eqn.value <= r100 + OVERLAP_TOLERANCE) {
+            range_scale.disabled = true;
+        } else {
+            range_scale.disabled = false;
+        }
+    }
 });
 
 //set event listener on the scale-factor slider
-sf.addEventListener('input', event => {
-    factor = parseFloat(sf.value);
-    updateScaleFactor(factor);
+range_scale.addEventListener('input', event => {
+    scale_factor = parseFloat(range_scale.value);
+    positionLabel(label_scale, range_scale);
+    updateScaleFactor(scale_factor);
 });
 
 
@@ -90,10 +88,10 @@ updateParams(params_static);
 generateTickmarks(ticks_static, params_static);
 
 updateParams(params_dynamic);
-updateScaleFactor(factor);
+range_scale.dispatchEvent(new Event('input'));
 
-nl_static.value = map_value(0, params_static.min, params_static.max, 0, 100);
-nl_static.dispatchEvent(new Event('input'));
+range_eqn.value = map_value(0, params_static.min, params_static.max, 0, 100);
+range_eqn.dispatchEvent(new Event('input'));
 
 indicator_zero.y = params_static.y;
 indicator_zero.update(map_value(0, params_static.min, params_static.max, 0, 100));
@@ -104,7 +102,7 @@ indicator_one.update(map_value(1, params_dynamic.min, params_dynamic.max, 0, 100
 indicator_one.render(svg_box);
 
 indicator_slider.y = params_static.y;
-indicator_slider.update(nl_dynamic.value);
+indicator_slider.update(range_eqn.value);
 indicator_slider.render(svg_box);
 
 
@@ -112,21 +110,24 @@ indicator_slider.render(svg_box);
 
 //this function does all the various things that need to happen whenever the scale factor is adjusted.
 function updateScaleFactor(n) {
-factor = n;
+scale_factor = n;
 
 //this is clumsy - should just refuse to do anything that would require dividing by zero instead.
-    if(factor == 0) {
-        factor = 0.1;
+    if(scale_factor == 0) {
+        scale_factor = 0.1;
+        label_scale.setAttribute('y', -1);
+    } else {
+        label_scale.setAttribute('y', 0);
     }
 
-    let currentMappedValue = map_value(nl_dynamic.value, 0, 100, params_dynamic.min, params_dynamic.max);
-    params_dynamic.spacing = Math.abs(factor)*params_static.spacing;
+    let currentMappedValue = map_value(range_eqn.value, 0, 100, params_dynamic.min, params_dynamic.max);
+    params_dynamic.spacing = Math.abs(scale_factor)*params_static.spacing;
     updateParams(params_dynamic);
     generateTickmarks(ticks_dynamic, params_dynamic);
 
     //this causes only a cosmetic change when rendering the axes - just plonks a negative sign out the front
     //gonna need to do something with the 'currentMappedValue' so that the slider tracks into the correct side of zero.
-    if (factor < 0) {
+    if (scale_factor < 0) {
         if(params_dynamic.reverse == false) {
             params_dynamic.reverse = true;
             currentMappedValue *= -1;
@@ -138,19 +139,16 @@ factor = n;
         }
     }
 
-    nl_dynamic.value = map_value(currentMappedValue, params_dynamic.min, params_dynamic.max, 0, 100);
+    range_eqn.value = map_value(currentMappedValue, params_dynamic.min, params_dynamic.max, 0, 100);
 
     //Update positions of UI elements. Really these could be grouped for convenience and lighter code.
-    indicator_one.update(map_value(Math.sign(factor)*1, params_dynamic.min, params_dynamic.max, 0, 100));
+    indicator_one.update(map_value(Math.sign(scale_factor)*1, params_dynamic.min, params_dynamic.max, 0, 100));
+    label_scale.childNodes[0].nodeValue = `Scale factor = ${roundToDP(scale_factor, dpRounding)}`;
 
-    label_scale.setAttribute('transform', `translate(${map_value(Math.sign(factor)*1, params_dynamic.min, params_dynamic.max, 0, 100)},${0.5*(params_static.y + params_dynamic.y)}) rotate(90) translate(0, -1)`);
-    label_scale.childNodes[0].nodeValue = `Scale factor = ${roundToDP(factor, dpRounding)}`;
-
-    if(!divide) {
-        nl_dynamic.dispatchEvent(new Event('input'));
-    } else {
-        nl_static.dispatchEvent(new Event('input'));
-    }
+    //This is to stop the range_scale from being disabled while dragging into over the range_eqn thumb.
+    scaling = true;
+    range_eqn.dispatchEvent(new Event('input'));
+    scaling = false;
 }
 
 //this is used to produce the SVG axis with appropriate spacings and numbering of tick marks
@@ -229,16 +227,22 @@ function updateParams(params) {
     params.max = minmax.max;
 }
 
-function updateSlider() {
+function positionLabel(label, range) {
     let label_offset = -1;
-    let h = label_slider.getBBox().height;
-    if(100 - nl_dynamic.value  < h) {
-        label_offset= h;
+    let h = label.getBBox().height;
+    let val100 = map_value(range.value, range.min, range.max, 0, 100);
+    if(100 - val100  < h) {
+        label_offset = h;
     }
-    let mappedValue = map_value(nl_dynamic.value, 0, 100, params_dynamic.min, params_dynamic.max);
-    indicator_slider.update(nl_dynamic.value);
-    label_slider.setAttribute('transform', `translate(${nl_dynamic.value}, ${0.5*(params_static.y + params_dynamic.y)}) rotate(90) translate(0, ${label_offset})`);
-    label_slider.childNodes[0].nodeValue = `${roundToDP(Math.sign(factor)*mappedValue, dpRounding)} x ${roundToDP(factor, dpRounding)} = ${roundToDP(Math.sign(factor)*mappedValue, dpRounding)*roundToDP(factor, dpRounding)}`;
+    label.setAttribute('transform', `translate(${val100}, ${0.5*(params_static.y + params_dynamic.y)}) rotate(90) translate(0, ${label_offset})`);
+}
+
+function updateSlider() {
+    positionLabel(label_slider, range_eqn);
+    let mappedValue = map_value(range_eqn.value, 0, 100, params_dynamic.min, params_dynamic.max);
+    indicator_slider.update(range_eqn.value);
+    // label_slider.setAttribute('transform', `translate(${range_eqn.value}, ${0.5*(params_static.y + params_dynamic.y)}) rotate(90) translate(0, ${label_offset})`);
+    label_slider.childNodes[0].nodeValue = `${roundToDP(Math.sign(scale_factor)*mappedValue, dpRounding)} x ${roundToDP(scale_factor, dpRounding)} = ${roundToDP(Math.sign(scale_factor)*mappedValue, dpRounding)*roundToDP(scale_factor, dpRounding)}`;
     curtailNumber(label_slider, dpRounding + 1);
 }
 
