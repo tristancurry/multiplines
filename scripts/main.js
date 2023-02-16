@@ -63,7 +63,6 @@ indicator.setAttribute('d', `m0 0v${params_dynamic.y - params_static.y}`);
 //set event listeners on the equation slider
 //NB: there's a difference between input.value, and the input's HTML 'value' attribute
 range_eqn.addEventListener('input', event => { 
-    updateSlider();
     if(scaling == false) {
         //this is to prevent both sliders from being trapped together if they are manipulated while overlapping.
         let r100 = map_value(range_scale.value, range_scale.min, range_scale.max, 0, 100);
@@ -73,6 +72,7 @@ range_eqn.addEventListener('input', event => {
             range_scale.disabled = false;
         }
     }
+    updateSlider();
 });
 
 //set event listener on the scale-factor slider
@@ -228,21 +228,32 @@ function updateParams(params) {
     params.max = minmax.max;
 }
 
-function positionLabel(label, range) {
+function positionLabel(label, range, overlap = false) {
     let label_offset = -1;
     let h = label.getBBox().height;
     let val100 = map_value(range.value, range.min, range.max, 0, 100);
-    if(100 - val100  < h) {
-        label_offset = h;
-    }
+
+
+    if(overlap == true) {
+        if(100 - val100 < h) {
+            label_offset = 2*h;
+        } else if (val100 < h) {
+            label_offset -=h;
+        } else {
+            label_offset = h;
+        }
+    } else if(100 - val100  < h) {
+            label_offset = h;
+    } 
+    
+
     label.setAttribute('transform', `translate(${val100}, ${0.5*(params_static.y + params_dynamic.y)}) rotate(90) translate(0, ${label_offset})`);
 }
 
 function updateSlider() {
-    positionLabel(label_slider, range_eqn);
+    positionLabel(label_slider, range_eqn, range_scale.disabled);
     let mappedValue = map_value(range_eqn.value, 0, 100, params_dynamic.min, params_dynamic.max);
     indicator_slider.update(range_eqn.value);
-    // label_slider.setAttribute('transform', `translate(${range_eqn.value}, ${0.5*(params_static.y + params_dynamic.y)}) rotate(90) translate(0, ${label_offset})`);
     label_slider.childNodes[0].nodeValue = `${roundToDP(Math.sign(scale_factor)*mappedValue, dpRounding)} x ${roundToDP(scale_factor, dpRounding)} = ${roundToDP(Math.sign(scale_factor)*mappedValue, dpRounding)*roundToDP(scale_factor, dpRounding)}`;
     curtailNumber(label_slider, dpRounding + 1);
 }
