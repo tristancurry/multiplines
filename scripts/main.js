@@ -97,13 +97,14 @@ indicator_zero.y = params_static.y;
 indicator_zero.update(map_value(0, params_static.min, params_static.max, 0, 100));
 indicator_zero.render(svg_box);
 
+indicator_slider.y = params_static.y;
+indicator_slider.update(range_eqn.value);
+indicator_slider.render(svg_box);
+
 indicator_one.y = params_static.y;
 indicator_one.update(map_value(1, params_dynamic.min, params_dynamic.max, 0, 100));
 indicator_one.render(svg_box);
 
-indicator_slider.y = params_static.y;
-indicator_slider.update(range_eqn.value);
-indicator_slider.render(svg_box);
 
 
 ///FUNCTIONS
