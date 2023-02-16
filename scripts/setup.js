@@ -45,6 +45,7 @@ let loadScript = (url) => {
  
 const scriptURLs = [
     'scripts/Indicator.js',
+    'config.js',
     'scripts/main.js'
 ];
   

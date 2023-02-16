@@ -52,6 +52,7 @@ datalist {
     align-items: center;
     position: relative;
     width: 75%;
+    height: 70%;
 
 }
 
@@ -144,17 +145,11 @@ input[type="range"] {
     text-anchor:middle;
 }
 
-#nl_dynamic {
-    top: 70%;
-}
-
 #svg_axes {
     stroke-width: 0.75px;
 }
 
-#sf {
-    width: 90%;
-}
+
 
 text {
     user-select: none;
