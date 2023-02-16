@@ -46,12 +46,16 @@ axis_dynamic.setAttribute('d', `m-25 ${params_dynamic.y}h150`);
 
 nl_static.style.top = `${params_static.y}%`;
 nl_dynamic.style.top = `${params_dynamic.y}%`;
+sf.style.top = `${params_static.y}%`;
 
 let axesGap = svg_box.clientHeight*Math.abs(params_dynamic.y - params_static.y)/100;
 nl_static.style.setProperty('--h', `${axesGap/2}px`);
 nl_dynamic.style.setProperty('--h', `${axesGap/2}px`);
 nl_static.style.setProperty('--t', `translateY(${axesGap/4}px)`);
 nl_dynamic.style.setProperty('--t', `translateY(${-1*axesGap/4}px)`);
+sf.style.setProperty('--h', `${axesGap}px`);
+sf.style.setProperty('--t', `translateY(${axesGap/2}px)`);
+
 
 
 indicator.setAttribute('d', `m0 0v${params_dynamic.y - params_static.y}`);

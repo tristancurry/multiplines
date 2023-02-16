@@ -72,10 +72,8 @@ input[type="range"] {
 .range_overlay {
     position: absolute;
     display: block;
-
     -webkit-appearance: none; /* Hides the slider so that custom slider can be made */
     background: transparent; /* Otherwise white in Chrome */
-
     width: auto;
     padding: 0px;
     margin: 0px;
@@ -143,7 +141,8 @@ input[type="range"] {
 }
 
 #sf {
-    width: 90%
+    width: 90%;
+    background-color:aquamarine;
 }
 
 text {
