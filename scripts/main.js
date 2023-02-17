@@ -11,7 +11,9 @@ const xlink = 'http://www.w3.org/1999/xlink';
 //could make this less wordy.
 const numberlines = document.getElementById('numberlines');
 const svg_box = document.getElementsByTagName('svg')[0];
-svg_box.setAttribute('viewBox', `0 0 ${WIDTH} ${HEIGHT}`);
+
+
+svg_box.setAttribute('viewBox', `0 0 ${ASPECT_RATIO*100} 100`);
 
 let svg_vals = svg_box.viewBox.baseVal;
 
@@ -52,11 +54,10 @@ range_eqn.style.top = `${100*params_static.y/svg_vals.height}%`;
 range_scale.style.top = `${100*params_static.y/svg_vals.height}%`;
 
 let axesGap = svg_box.clientHeight*Math.abs(params_dynamic.y - params_static.y)/100;
-range_eqn.style.setProperty('--h', `${axesGap}px`);
-range_eqn.style.setProperty('--t', `translateY(${axesGap/2}px)`);
-range_scale.style.setProperty('--h', `${axesGap}px`);
-range_scale.style.setProperty('--t', `translateY(${axesGap/2}px)`);
-document.documentElement.style.setProperty('--svg-text-size', `${(params_dynamic.y - params_static.y)/14}px`);
+document.documentElement.style.setProperty('--h', `${axesGap}px`);
+document.documentElement.style.setProperty('--t', `translateY(${axesGap/2}px)`);
+document.documentElement.style.setProperty('--label-text-size', `${(params_dynamic.y - params_static.y)/12}px`);
+document.documentElement.style.setProperty('--ticknumber-text-size', `${(params_dynamic.y - params_static.y)/15}px`);
 
 
 
@@ -261,7 +262,7 @@ function updateSlider() {
     positionLabel(label_slider, range_eqn, range_scale.disabled);
     let mappedValue = map_value(range_eqn.value, 0, 100, params_dynamic.min, params_dynamic.max);
     indicator_slider.update(map_value(range_eqn.value, 0, 100, svg_vals.x, svg_vals.x + svg_vals.width));
-    label_slider.childNodes[0].nodeValue = `${roundToDP(Math.sign(scale_factor)*mappedValue, dpRounding)} x ${roundToDP(scale_factor, dpRounding)} = ${roundToDP(Math.sign(scale_factor)*mappedValue, dpRounding)*roundToDP(scale_factor, dpRounding)}`;
+    label_slider.childNodes[0].nodeValue = `${roundToDP(Math.sign(scale_factor)*mappedValue, dpRounding)} x ${roundToDP(scale_factor, dpRounding)} = ${roundToDP(roundToDP(Math.sign(scale_factor)*mappedValue, dpRounding)*roundToDP(scale_factor, dpRounding), 8)}`;
     curtailNumber(label_slider, dpRounding + 1);
 }
 
