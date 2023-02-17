@@ -65,7 +65,7 @@ indicator.setAttribute('d', `m0 0v${params_dynamic.y - params_static.y}`);
 range_eqn.addEventListener('input', event => { 
     if(scaling == false) {
         //this is to prevent both sliders from being trapped together if they are manipulated while overlapping.
-        let r100 = map_value(range_scale.value, range_scale.min, range_scale.max, 0, 100);
+        let r100 = map_value(range_scale.value, range_scale.min, range_scale.max, svg_vals.x, svg_vals.width);
         if (range_eqn.value >= r100 - OVERLAP_TOLERANCE && range_eqn.value <= r100 + OVERLAP_TOLERANCE) {
             range_scale.disabled = true;
         } else {
