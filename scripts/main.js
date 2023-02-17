@@ -12,16 +12,17 @@ const xlink = 'http://www.w3.org/1999/xlink';
 const numberlines = document.getElementById('numberlines');
 const svg_box = document.getElementsByTagName('svg')[0];
 
-
-svg_box.setAttribute('viewBox', `0 0 ${ASPECT_RATIO*100} 100`);
+//at some point around here need to bundle some of these things into a function
+//set the viewBox units to match the aspect ratio set in config.js
+if(ASPECT_RATIO) {
+    svg_box.setAttribute('viewBox', `0 0 ${ASPECT_RATIO*100} 100`);
+} else {
+    svg_box.setAttribute('viewBox', `0 0 1770 100`);
+}
 
 let svg_vals = svg_box.viewBox.baseVal;
 
 const indicator = document.getElementById('indicator'); //this one is the template for all indicators
-
-const indicator_zero = new Indicator(svg_vals.x, 0, false, 'indicator_zero');
-const indicator_one = new Indicator(svg_vals.x, 0, true, 'indicator_one');
-const indicator_slider = new Indicator(svg_vals.x, 0, true, 'indicator_slider');
 
 const svg_static = document.getElementById('svg_static');
 const axis_static = document.getElementById('axis_static');
@@ -40,6 +41,8 @@ const label_group = document.getElementById('labels');
 const range_scale = document.getElementById('range_scale');
 range_scale.value = scale_factor;
 
+//from here there's a bunch of geometry and layout things.
+//TODO: bundle into a 'refresh' function that can be called if the geometry needs to be changed dynamically
 const params_static = {min:STATIC_AXIS_MIN, max:STATIC_AXIS_MAX, x:map_value(0, STATIC_AXIS_MIN, STATIC_AXIS_MAX, svg_vals.x, svg_vals.x + svg_vals.width), y:svg_vals.y + 2*TICKMARK_HEIGHT, spacing:svg_vals.width/(STATIC_AXIS_MAX - STATIC_AXIS_MIN), reverse:false};
 const params_dynamic = {x:params_static.x, y:svg_vals.y + svg_vals.height - 2*TICKMARK_HEIGHT, reverse:false};
 range_scale.setAttribute('min', `${params_static.min}`);
@@ -49,21 +52,21 @@ range_scale.setAttribute('max', `${params_static.max}`);
 //now make sure the axes, input ranges and indicators are visually aligned to these params...
 axis_static.setAttribute('d', `m${svg_vals.x} ${params_static.y}h${svg_vals.width}`);
 axis_dynamic.setAttribute('d', `m${svg_vals.x} ${params_dynamic.y}h${svg_vals.width}`);
+indicator.setAttribute('d', `m0 0v${params_dynamic.y - params_static.y}`);
 
 range_eqn.style.top = `${100*params_static.y/svg_vals.height}%`;
 range_scale.style.top = `${100*params_static.y/svg_vals.height}%`;
 
 let axesGap = svg_box.clientHeight*Math.abs(params_dynamic.y - params_static.y)/100;
+
+//Modify the values of CSS properties defined on root, which are then used to style various elements in the document
 document.documentElement.style.setProperty('--h', `${axesGap}px`);
 document.documentElement.style.setProperty('--t', `translateY(${axesGap/2}px)`);
 document.documentElement.style.setProperty('--label-text-size', `${(params_dynamic.y - params_static.y)/12}px`);
 document.documentElement.style.setProperty('--ticknumber-text-size', `${(params_dynamic.y - params_static.y)/15}px`);
-document.documentElement.style.setProperty('--thumb-colour', EQUATION_COLOUR);
-document.documentElement.style.setProperty('--sf-colour', SCALE_FACTOR_COLOUR);
+if (EQUATION_COLOUR) {document.documentElement.style.setProperty('--thumb-colour', EQUATION_COLOUR)};
+if (SCALE_FACTOR_COLOUR) {document.documentElement.style.setProperty('--sf-colour', SCALE_FACTOR_COLOUR);}
 
-
-
-indicator.setAttribute('d', `m0 0v${params_dynamic.y - params_static.y}`);
 
 //set event listeners on the equation slider
 //NB: there's a difference between input.value, and the input's HTML 'value' attribute
@@ -96,8 +99,13 @@ range_scale.addEventListener('input', event => {
 //initial setup based on static and dynamic parameters (primarily static 'spacing' and 0 position (origin.x))
 updateParams(params_static);
 generateTickmarks(ticks_static, params_static);
-
 updateParams(params_dynamic);
+
+
+const indicator_zero = new Indicator(svg_vals.x, 0, false, 'indicator_zero');
+const indicator_one = new Indicator(svg_vals.x, 0, true, 'indicator_one');
+const indicator_slider = new Indicator(svg_vals.x, 0, true, 'indicator_slider');
+
 range_scale.dispatchEvent(new Event('input'));
 
 range_eqn.value = map_value(0, params_static.min, params_static.max, svg_vals.x, svg_vals.x + svg_vals.width);
@@ -165,61 +173,61 @@ scale_factor = n;
 //this is used to produce the SVG axis with appropriate spacings and numbering of tick marks
 function generateTickmarks (target, params) {
 
-//remove existing tickmarks and numbers
-while (target.firstChild) {
-    target.firstChild.remove();
-}
-
-let inc = 1;
-let spacing = params.spacing;
-
-//this spacing stuff is a bit hacky, and could be done better.
-//if spacing is too big, inject intermediate tick marks...
-while (spacing > 45) {
-    spacing = spacing/5;
-    inc = inc/5;
-}
-//if spacing is too tight, remove tick marks
-while (spacing < 5) {
-    spacing = spacing*5;
-    inc = inc*5;
-}
-
-let firstTick = inc*Math.ceil(params.min/inc);
-let firstTickPos = map_value(firstTick, params.min, params.max, svg_vals.x, svg_vals.x + svg_vals.width);
-let n_ticks = Math.floor((svg_vals.width - firstTickPos)/spacing);
-
-
-for (let i = 0; i <= n_ticks; i++) {
-
-    //create a 'clone' of the tickmark path specified in the SVG 'defs' element
-    let tick = document.createElementNS(xmlns, 'use');
-    tick.setAttribute('transform', `translate(${firstTickPos + i*spacing}, ${params.y})`);
-    tick.setAttributeNS(xlink, 'xlink:href', '#tickmark');
-    target.appendChild(tick);
-
-    //create SVG 'text' element for the corresponding number
-    let num = document.createElementNS(xmlns, 'text');
-    let rev = 1;
-    if (params.reverse == true) {rev = -1;}
-    num.setAttribute('class', 'ticknumber');
-    num.insertAdjacentText('beforeend', `${Math.round(rev*10*(firstTick + i*inc))/10}`);
-    target.appendChild(num);
-    
-    
-    //get bounding boxes of the tick mark and the number, to provide coordinate info
-    //for vertical positioning of numbers.
-    let tickBounds = tick.getBBox();
-    num.setAttribute('x', `${firstTickPos + i*spacing}`);
-    num.setAttribute('y', `${params.y + 0.5*tickBounds.height}`);
-    let numBounds = num.getBBox();
-    num.setAttribute('transform', `translate(0, ${0.9*numBounds.height})`);
-    //if the number will be rendered only partially, hide it. This is done with reference to the viewBox of
-    //the surrounding SVG element.
-    if (numBounds.x < svg_vals.x || numBounds.x + numBounds.width > svg_vals.x + svg_vals.width) {
-        num.style.display = 'none';
+    //remove existing tickmarks and numbers
+    while (target.firstChild) {
+        target.firstChild.remove();
     }
-}
+
+    let inc = 1;
+    let spacing = params.spacing;
+
+    //this spacing stuff is a bit hacky, and could be done better.
+    //if spacing is too big, inject intermediate tick marks...
+    while (spacing > 45) {
+        spacing = spacing/5;
+        inc = inc/5;
+    }
+    //if spacing is too tight, remove tick marks
+    while (spacing < 5) {
+        spacing = spacing*5;
+        inc = inc*5;
+    }
+
+    let firstTick = inc*Math.ceil(params.min/inc);
+    let firstTickPos = map_value(firstTick, params.min, params.max, svg_vals.x, svg_vals.x + svg_vals.width);
+    let n_ticks = Math.floor((svg_vals.width - firstTickPos)/spacing);
+
+
+    for (let i = 0; i <= n_ticks; i++) {
+
+        //create a 'clone' of the tickmark path specified in the SVG 'defs' element
+        let tick = document.createElementNS(xmlns, 'use');
+        tick.setAttribute('transform', `translate(${firstTickPos + i*spacing}, ${params.y})`);
+        tick.setAttributeNS(xlink, 'xlink:href', '#tickmark');
+        target.appendChild(tick);
+
+        //create SVG 'text' element for the corresponding number
+        let num = document.createElementNS(xmlns, 'text');
+        let rev = 1;
+        if (params.reverse == true) {rev = -1;}
+        num.setAttribute('class', 'ticknumber');
+        num.insertAdjacentText('beforeend', `${Math.round(rev*10*(firstTick + i*inc))/10}`);
+        target.appendChild(num);
+        
+        
+        //get bounding boxes of the tick mark and the number, to provide coordinate info
+        //for vertical positioning of numbers.
+        let tickBounds = tick.getBBox();
+        num.setAttribute('x', `${firstTickPos + i*spacing}`);
+        num.setAttribute('y', `${params.y + 0.5*tickBounds.height}`);
+        let numBounds = num.getBBox();
+        num.setAttribute('transform', `translate(0, ${0.9*numBounds.height})`);
+        //if the number will be rendered only partially, hide it. This is done with reference to the viewBox of
+        //the surrounding SVG element.
+        if (numBounds.x < svg_vals.x || numBounds.x + numBounds.width > svg_vals.x + svg_vals.width) {
+            num.style.display = 'none';
+        }
+    }
 }
 
 
