@@ -1,6 +1,10 @@
 :root {
     --thumb-colour: rgb(0, 145, 255);
     --sf-colour: rgb(255, 80, 80);
+    --label-text-size: 6px;
+    --ticknumber-text-size: 6px;
+    --t: translateY(50px);
+    --h: 100px;
 }
 html {
 }
@@ -61,7 +65,7 @@ datalist {
     position: relative;
     align-items: center;
     justify-content: center;
-    width: fit-content;
+    width: 100%;
     overflow:hidden;    
 }
 
@@ -86,8 +90,8 @@ input[type="range"] {
 
 .range_overlay::-webkit-slider-thumb {
     -webkit-appearance:none;
-    height: var(--h, 100px);
-    transform: var(--t, translateY(50px));
+    height: var(--h);
+    transform: var(--t);
     width: 1%;
     cursor: pointer;
     margin-top: 0px;
@@ -97,8 +101,8 @@ input[type="range"] {
 }
 
 .range_overlay::-moz-range-thumb {
-    height: var(--h, 100px);
-    transform: var(--t, translateY(50px));
+    height: var(--h);
+    transform: var(--t);
     width: 1%;
     cursor: pointer;
     margin-top: 0px;
@@ -109,8 +113,8 @@ input[type="range"] {
 }
 
 .range_overlay::-ms-thumb {
-    height: var(--h, 100px);
-    transform: var(--t, translateY(50px));
+    height: var(--h);
+    transform: var(--t);
     width: 1%;
     cursor: pointer;
     margin-top: 0px;
@@ -142,7 +146,7 @@ input[type="range"] {
 }
 
 .ticknumber {
-    font-size: 0.25em;
+    font-size: var(--ticknumber-text-size);
     fill: black;
     stroke: none;
     text-anchor:middle;
@@ -179,7 +183,7 @@ text {
 }
 
 #labels {
-    font-size: 0.20em;
+    font-size: var(--label-text-size);
     text-anchor: middle;
     text-align: center;
 }
