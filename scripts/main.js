@@ -37,15 +37,15 @@ const label_group = document.getElementById('labels');
 const range_scale = document.getElementById('range_scale');
 range_scale.value = scale_factor;
 
-const params_static = {min:STATIC_AXIS_MIN, max:STATIC_AXIS_MAX, x:map_value(0, STATIC_AXIS_MIN, STATIC_AXIS_MAX, 0, 100), y:STATIC_AXIS_Y, spacing:100/(STATIC_AXIS_MAX - STATIC_AXIS_MIN), reverse:false};
+const params_static = {min:STATIC_AXIS_MIN, max:STATIC_AXIS_MAX, x:map_value(0, STATIC_AXIS_MIN, STATIC_AXIS_MAX, svg_vals.x, svg_vals.width), y:STATIC_AXIS_Y, spacing:100/(STATIC_AXIS_MAX - STATIC_AXIS_MIN), reverse:false};
 const params_dynamic = {x:params_static.x, y:DYNAMIC_AXIS_Y, reverse:false};
 range_scale.setAttribute('min', `${params_static.min}`);
 range_scale.setAttribute('max', `${params_static.max}`);
 
 
 //now make sure the axes, input ranges and indicators are visually aligned to these params...
-axis_static.setAttribute('d', `m-25 ${params_static.y}h150`);
-axis_dynamic.setAttribute('d', `m-25 ${params_dynamic.y}h150`);
+axis_static.setAttribute('d', `m${svg_vals.x - 0.5*svg_vals.width} ${params_static.y}h${svg_vals.width*1.5}`);
+axis_dynamic.setAttribute('d', `m${svg_vals.x - 0.5*svg_vals.width} ${params_dynamic.y}h${svg_vals.width*1.5}`);
 
 range_eqn.style.top = `${100*params_static.y/svg_vals.height}%`;
 range_scale.style.top = `${100*params_static.y/svg_vals.height}%`;
