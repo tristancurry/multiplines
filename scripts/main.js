@@ -188,7 +188,7 @@ function generateTickmarks (target, params) {
         inc = inc/5;
     }
     //if spacing is too tight, remove tick marks
-    while (spacing < 5) {
+    while (spacing < 6) {
         spacing = spacing*5;
         inc = inc*5;
     }
