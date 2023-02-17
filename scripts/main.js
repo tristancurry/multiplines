@@ -16,9 +16,9 @@ let svg_vals = svg_box.viewBox.baseVal;
 
 const indicator = document.getElementById('indicator'); //this one is the template for all indicators
 
-const indicator_zero = new Indicator(0, false, 'indicator_zero');
-const indicator_one = new Indicator(0, true, 'indicator_one');
-const indicator_slider = new Indicator(0, true, 'indicator_slider');
+const indicator_zero = new Indicator(svg_vals.x, 0, false, 'indicator_zero');
+const indicator_one = new Indicator(svg_vals.x, 0, true, 'indicator_one');
+const indicator_slider = new Indicator(svg_vals.x, 0, true, 'indicator_slider');
 
 const svg_static = document.getElementById('svg_static');
 const axis_static = document.getElementById('axis_static');
@@ -37,15 +37,15 @@ const label_group = document.getElementById('labels');
 const range_scale = document.getElementById('range_scale');
 range_scale.value = scale_factor;
 
-const params_static = {min:STATIC_AXIS_MIN, max:STATIC_AXIS_MAX, x:map_value(0, STATIC_AXIS_MIN, STATIC_AXIS_MAX, svg_vals.x, svg_vals.width), y:STATIC_AXIS_Y, spacing:100/(STATIC_AXIS_MAX - STATIC_AXIS_MIN), reverse:false};
+const params_static = {min:STATIC_AXIS_MIN, max:STATIC_AXIS_MAX, x:map_value(0, STATIC_AXIS_MIN, STATIC_AXIS_MAX, svg_vals.x, svg_vals.x + svg_vals.width), y:STATIC_AXIS_Y, spacing:svg_vals.width/(STATIC_AXIS_MAX - STATIC_AXIS_MIN), reverse:false};
 const params_dynamic = {x:params_static.x, y:DYNAMIC_AXIS_Y, reverse:false};
 range_scale.setAttribute('min', `${params_static.min}`);
 range_scale.setAttribute('max', `${params_static.max}`);
 
 
 //now make sure the axes, input ranges and indicators are visually aligned to these params...
-axis_static.setAttribute('d', `m${svg_vals.x - 0.5*svg_vals.width} ${params_static.y}h${svg_vals.width*1.5}`);
-axis_dynamic.setAttribute('d', `m${svg_vals.x - 0.5*svg_vals.width} ${params_dynamic.y}h${svg_vals.width*1.5}`);
+axis_static.setAttribute('d', `m${svg_vals.x - 0.5*svg_vals.width} ${params_static.y}h${svg_vals.x + svg_vals.width*1.5}`);
+axis_dynamic.setAttribute('d', `m${svg_vals.x - 0.5*svg_vals.width} ${params_dynamic.y}h${svg_vals.x + svg_vals.width*1.5}`);
 
 range_eqn.style.top = `${100*params_static.y/svg_vals.height}%`;
 range_scale.style.top = `${100*params_static.y/svg_vals.height}%`;
@@ -65,7 +65,7 @@ indicator.setAttribute('d', `m0 0v${params_dynamic.y - params_static.y}`);
 range_eqn.addEventListener('input', event => { 
     if(scaling == false) {
         //this is to prevent both sliders from being trapped together if they are manipulated while overlapping.
-        let r100 = map_value(range_scale.value, range_scale.min, range_scale.max, svg_vals.x, svg_vals.width);
+        let r100 = map_value(range_scale.value, range_scale.min, range_scale.max, svg_vals.x, svg_vals.x + svg_vals.width);
         if (range_eqn.value >= r100 - OVERLAP_TOLERANCE && range_eqn.value <= r100 + OVERLAP_TOLERANCE) {
             range_scale.disabled = true;
         } else {
@@ -90,19 +90,19 @@ generateTickmarks(ticks_static, params_static);
 updateParams(params_dynamic);
 range_scale.dispatchEvent(new Event('input'));
 
-range_eqn.value = map_value(0, params_static.min, params_static.max, 0, 100);
+range_eqn.value = map_value(0, params_static.min, params_static.max, svg_vals.x, svg_vals.x + svg_vals.width);
 range_eqn.dispatchEvent(new Event('input'));
 
 indicator_zero.y = params_static.y;
-indicator_zero.update(map_value(0, params_static.min, params_static.max, 0, 100));
+indicator_zero.update(map_value(0, params_static.min, params_static.max, svg_vals.x, svg_vals.x + svg_vals.width));
 indicator_zero.render(svg_box);
 
 indicator_slider.y = params_static.y;
-indicator_slider.update(range_eqn.value);
+updateSlider();
 indicator_slider.render(svg_box);
 
 indicator_one.y = params_static.y;
-indicator_one.update(map_value(1, params_dynamic.min, params_dynamic.max, 0, 100));
+indicator_one.update(map_value(1, params_dynamic.min, params_dynamic.max, svg_vals.x, svg_vals.x + svg_vals.width));
 indicator_one.render(svg_box);
 
 
@@ -143,7 +143,7 @@ scale_factor = n;
     range_eqn.value = map_value(currentMappedValue, params_dynamic.min, params_dynamic.max, 0, 100);
 
     //Update positions of UI elements. Really these could be grouped for convenience and lighter code.
-    indicator_one.update(map_value(Math.sign(scale_factor)*1, params_dynamic.min, params_dynamic.max, 0, 100));
+    indicator_one.update(map_value(Math.sign(scale_factor)*1, params_dynamic.min, params_dynamic.max, svg_vals.x, svg_vals.x + svg_vals.width));
     label_scale.childNodes[0].nodeValue = `Scale factor = ${roundToDP(scale_factor, dpRounding)}`;
 
     //This is to stop the range_scale from being disabled while dragging into over the range_eqn thumb.
@@ -176,8 +176,8 @@ while (spacing < 5) {
 }
 
 let firstTick = inc*Math.ceil(params.min/inc);
-let firstTickPos = map_value(firstTick, params.min, params.max, 0, 100);
-let n_ticks = Math.floor((100 - firstTickPos)/spacing);
+let firstTickPos = map_value(firstTick, params.min, params.max, svg_vals.x, svg_vals.x + svg_vals.width);
+let n_ticks = Math.floor((svg_vals.width - firstTickPos)/spacing);
 
 
 for (let i = 0; i <= n_ticks; i++) {
@@ -215,9 +215,9 @@ for (let i = 0; i <= n_ticks; i++) {
 
 //find current min and max on a scale...
 function axisMinMax(originX, spacing) {
-    let spacings = 100/spacing;
-    let min = (0 - originX)/spacing;
-    let max = (100 - originX)/spacing;
+    let spacings = svg_vals.width/spacing;
+    let min = (svg_vals.x - originX)/spacing;
+    let max = (svg_vals.width + svg_vals.x - originX)/spacing;
     return ({min, max});
 }
 
@@ -231,18 +231,18 @@ function updateParams(params) {
 function positionLabel(label, range, overlap = false) {
     let label_offset = -1;
     let h = label.getBBox().height;
-    let val100 = map_value(range.value, range.min, range.max, 0, 100);
+    let val100 = map_value(range.value, range.min, range.max, svg_vals.x, svg_vals.x + svg_vals.width);
 
 
     if(overlap == true) {
-        if(100 - val100 < h) {
+        if(svg_vals.x + svg_vals.width - val100 < h) {
             label_offset = 2*h;
         } else if (val100 < h) {
             label_offset -=h;
         } else {
             label_offset = h;
         }
-    } else if(100 - val100  < h) {
+    } else if(svg_vals.x + svg_vals.width - val100  < h) {
             label_offset = h;
     } 
     
@@ -253,7 +253,7 @@ function positionLabel(label, range, overlap = false) {
 function updateSlider() {
     positionLabel(label_slider, range_eqn, range_scale.disabled);
     let mappedValue = map_value(range_eqn.value, 0, 100, params_dynamic.min, params_dynamic.max);
-    indicator_slider.update(range_eqn.value);
+    indicator_slider.update(map_value(range_eqn.value, 0, 100, svg_vals.x, svg_vals.x + svg_vals.width));
     label_slider.childNodes[0].nodeValue = `${roundToDP(Math.sign(scale_factor)*mappedValue, dpRounding)} x ${roundToDP(scale_factor, dpRounding)} = ${roundToDP(Math.sign(scale_factor)*mappedValue, dpRounding)*roundToDP(scale_factor, dpRounding)}`;
     curtailNumber(label_slider, dpRounding + 1);
 }

@@ -1,5 +1,5 @@
-function Indicator (posY=0, arrow=false, className) {
-    this.x = 0;
+function Indicator (posX=0, posY=0, arrow=false, className) {
+    this.x = posX;
     this.y = posY;
 
     this.elm = document.createElementNS(xmlns, 'use');
