@@ -44,8 +44,8 @@ range_scale.setAttribute('max', `${params_static.max}`);
 
 
 //now make sure the axes, input ranges and indicators are visually aligned to these params...
-axis_static.setAttribute('d', `m${svg_vals.x - 0.5*svg_vals.width} ${params_static.y}h${svg_vals.x + svg_vals.width*1.5}`);
-axis_dynamic.setAttribute('d', `m${svg_vals.x - 0.5*svg_vals.width} ${params_dynamic.y}h${svg_vals.x + svg_vals.width*1.5}`);
+axis_static.setAttribute('d', `m${svg_vals.x} ${params_static.y}h${svg_vals.width}`);
+axis_dynamic.setAttribute('d', `m${svg_vals.x} ${params_dynamic.y}h${svg_vals.width}`);
 
 range_eqn.style.top = `${100*params_static.y/svg_vals.height}%`;
 range_scale.style.top = `${100*params_static.y/svg_vals.height}%`;
@@ -65,7 +65,7 @@ indicator.setAttribute('d', `m0 0v${params_dynamic.y - params_static.y}`);
 range_eqn.addEventListener('input', event => { 
     if(scaling == false) {
         //this is to prevent both sliders from being trapped together if they are manipulated while overlapping.
-        let r100 = map_value(range_scale.value, range_scale.min, range_scale.max, svg_vals.x, svg_vals.x + svg_vals.width);
+        let r100 = map_value(range_scale.value, range_scale.min, range_scale.max, 0, 100);
         if (range_eqn.value >= r100 - OVERLAP_TOLERANCE && range_eqn.value <= r100 + OVERLAP_TOLERANCE) {
             range_scale.disabled = true;
         } else {
@@ -80,6 +80,11 @@ range_scale.addEventListener('input', event => {
     scale_factor = parseFloat(range_scale.value);
     positionLabel(label_scale, range_scale);
     updateScaleFactor(scale_factor);
+    let r100 = map_value(range_scale.value, range_scale.min, range_scale.max, 0, 100);
+    if (range_eqn.value >= r100 - OVERLAP_TOLERANCE && range_eqn.value <= r100 + OVERLAP_TOLERANCE) {
+        positionLabel(label_scale, range_scale, true);
+    }
+
 });
 
 
