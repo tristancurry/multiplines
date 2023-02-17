@@ -11,6 +11,7 @@ const xlink = 'http://www.w3.org/1999/xlink';
 //could make this less wordy.
 const numberlines = document.getElementById('numberlines');
 const svg_box = document.getElementsByTagName('svg')[0];
+svg_box.setAttribute('viewBox', `0 0 ${WIDTH} ${HEIGHT}`);
 
 let svg_vals = svg_box.viewBox.baseVal;
 
@@ -37,8 +38,8 @@ const label_group = document.getElementById('labels');
 const range_scale = document.getElementById('range_scale');
 range_scale.value = scale_factor;
 
-const params_static = {min:STATIC_AXIS_MIN, max:STATIC_AXIS_MAX, x:map_value(0, STATIC_AXIS_MIN, STATIC_AXIS_MAX, svg_vals.x, svg_vals.x + svg_vals.width), y:STATIC_AXIS_Y, spacing:svg_vals.width/(STATIC_AXIS_MAX - STATIC_AXIS_MIN), reverse:false};
-const params_dynamic = {x:params_static.x, y:DYNAMIC_AXIS_Y, reverse:false};
+const params_static = {min:STATIC_AXIS_MIN, max:STATIC_AXIS_MAX, x:map_value(0, STATIC_AXIS_MIN, STATIC_AXIS_MAX, svg_vals.x, svg_vals.x + svg_vals.width), y:svg_vals.y + 2*TICKMARK_HEIGHT, spacing:svg_vals.width/(STATIC_AXIS_MAX - STATIC_AXIS_MIN), reverse:false};
+const params_dynamic = {x:params_static.x, y:svg_vals.y + svg_vals.height - 2*TICKMARK_HEIGHT, reverse:false};
 range_scale.setAttribute('min', `${params_static.min}`);
 range_scale.setAttribute('max', `${params_static.max}`);
 
@@ -55,6 +56,7 @@ range_eqn.style.setProperty('--h', `${axesGap}px`);
 range_eqn.style.setProperty('--t', `translateY(${axesGap/2}px)`);
 range_scale.style.setProperty('--h', `${axesGap}px`);
 range_scale.style.setProperty('--t', `translateY(${axesGap/2}px)`);
+document.documentElement.style.setProperty('--svg-text-size', `${(params_dynamic.y - params_static.y)/14}px`);
 
 
 
@@ -208,7 +210,7 @@ for (let i = 0; i <= n_ticks; i++) {
     num.setAttribute('x', `${firstTickPos + i*spacing}`);
     num.setAttribute('y', `${params.y + 0.5*tickBounds.height}`);
     let numBounds = num.getBBox();
-    num.setAttribute('transform', `translate(0, ${0.85*numBounds.height})`);
+    num.setAttribute('transform', `translate(0, ${0.9*numBounds.height})`);
     //if the number will be rendered only partially, hide it. This is done with reference to the viewBox of
     //the surrounding SVG element.
     if (numBounds.x < svg_vals.x || numBounds.x + numBounds.width > svg_vals.x + svg_vals.width) {

@@ -5,5 +5,6 @@ const SCALE_FACTOR_DEFAULT = 1;
 const ROUNDING_DECIMAL_POINTS = 1;
 const OVERLAP_TOLERANCE = 1;
 
-const STATIC_AXIS_Y = 10;
-const DYNAMIC_AXIS_Y = 50;
+const WIDTH = 160;
+const HEIGHT = 90; 
+const TICKMARK_HEIGHT = 5;

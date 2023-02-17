@@ -1,6 +1,7 @@
 :root {
     --thumb-colour: rgb(0, 145, 255);
     --sf-colour: rgb(255, 80, 80);
+    --svg-text-size: 6px;
 }
 html {
 }
@@ -61,7 +62,7 @@ datalist {
     position: relative;
     align-items: center;
     justify-content: center;
-    width: fit-content;
+    width: 100%;
     overflow:hidden;    
 }
 
@@ -142,7 +143,7 @@ input[type="range"] {
 }
 
 .ticknumber {
-    font-size: 0.25em;
+    font-size: var(--svg-text-size);
     fill: black;
     stroke: none;
     text-anchor:middle;
@@ -179,7 +180,7 @@ text {
 }
 
 #labels {
-    font-size: 0.20em;
+    font-size: var(--svg-text-size);
     text-anchor: middle;
     text-align: center;
 }
