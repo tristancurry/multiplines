@@ -7,3 +7,5 @@ const OVERLAP_TOLERANCE = 1;
 
 const ASPECT_RATIO = 16/9;
 const TICKMARK_HEIGHT = 5;
+const SCALE_FACTOR_COLOUR = 'rgb(255, 80, 80)';
+const EQUATION_COLOUR = 'rgb(0, 145, 255)';

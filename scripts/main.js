@@ -58,6 +58,8 @@ document.documentElement.style.setProperty('--h', `${axesGap}px`);
 document.documentElement.style.setProperty('--t', `translateY(${axesGap/2}px)`);
 document.documentElement.style.setProperty('--label-text-size', `${(params_dynamic.y - params_static.y)/12}px`);
 document.documentElement.style.setProperty('--ticknumber-text-size', `${(params_dynamic.y - params_static.y)/15}px`);
+document.documentElement.style.setProperty('--thumb-colour', EQUATION_COLOUR);
+document.documentElement.style.setProperty('--sf-colour', SCALE_FACTOR_COLOUR);
 
 
 
