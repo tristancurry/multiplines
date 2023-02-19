@@ -73,7 +73,7 @@ document.documentElement.style.setProperty('--ticknumber-text-size', `${(params_
 if (EQUATION_COLOUR) {document.documentElement.style.setProperty('--thumb-colour', EQUATION_COLOUR)};
 if (SCALE_FACTOR_COLOUR) {document.documentElement.style.setProperty('--sf-colour', SCALE_FACTOR_COLOUR);}
 
-if(params_static.min > 0 || params_static.max < 0) {
+if(params_static.min > 0 || params_static.max < 0 || ZERO_DRAGGABLE !== true) {
     range_zero.classList.add('noshow');
 } else {
     range_zero.max = (params_static.max - params_static.min)/2;
