@@ -73,6 +73,15 @@ document.documentElement.style.setProperty('--ticknumber-text-size', `${(params_
 if (EQUATION_COLOUR) {document.documentElement.style.setProperty('--thumb-colour', EQUATION_COLOUR)};
 if (SCALE_FACTOR_COLOUR) {document.documentElement.style.setProperty('--sf-colour', SCALE_FACTOR_COLOUR);}
 
+if(params_static.min > 0 || params_static.max < 0) {
+    range_zero.classList.add('noshow');
+} else {
+    range_zero.max = (params_static.max - params_static.min)/2;
+    range_zero.min = -1*range_zero.max;
+    zeroPos = map_value(0, range_zero.min, range_zero.max, params_static.min, params_static.max);
+    range_zero.value = zeroPos;
+}
+
 
 //set event listeners on the equation slider
 //NB: there's a difference between input.value, and the input's HTML 'value' attribute
@@ -102,8 +111,12 @@ range_scale.addEventListener('input', event => {
 
 //set event listener on the zero-position slider
 range_zero.addEventListener('input', event => {
+    if(Math.abs(range_zero.value) > 0.9*range_zero.max) {
+        range_zero.value = Math.sign(range_zero.value)*0.9*range_zero.max;
+    }
     translateZero(range_zero.value - zeroPos);
     zeroPos = range_zero.value;
+    indicator_zero.update(map_value(0, params_static.min, params_static.max, svg_vals.x, svg_vals.x + svg_vals.width));
 });
 
 
@@ -184,10 +197,7 @@ scale_factor = n;
 //this is used to produce the SVG axis with appropriate spacings and numbering of tick marks
 function generateTickmarks (target, params) {
 
-    //remove existing tickmarks and numbers
-    while (target.firstChild) {
-        target.firstChild.remove();
-    }
+
 
     let inc = 1;
     let spacing = params.spacing;
@@ -208,22 +218,46 @@ function generateTickmarks (target, params) {
     let firstTickPos = map_value(firstTick, params.min, params.max, svg_vals.x, svg_vals.x + svg_vals.width);
     let n_ticks = Math.floor((svg_vals.width - firstTickPos)/spacing);
 
+    //set display of existing ticks and numbers to 'none'
+    //for performance reasons, it's better to do this via toggling class than manipulating .style on each element
+    let ticksandnums = target.childNodes;
+    let existingTicks = target.getElementsByTagName('use');
+    let existingNums = target.getElementsByTagName('text');
+
+    for (let i = 0, l = ticksandnums.length; i < l; i++) {
+        ticksandnums[i].classList.add('noshow');
+    }
+
 
     for (let i = 0; i <= n_ticks; i++) {
+        let tick;
+        //first see if an existing tickmark can be used
+        if (existingTicks[i]) {
+            tick = existingTicks[i];
+            tick.classList.remove('noshow');
+        } else {
+            //if not, create a 'clone' of the tickmark path specified in the SVG 'defs' element
+            tick = document.createElementNS(xmlns, 'use');
+            tick.setAttributeNS(xlink, 'xlink:href', '#tickmark');
+            target.appendChild(tick);
+        }
 
-        //create a 'clone' of the tickmark path specified in the SVG 'defs' element
-        let tick = document.createElementNS(xmlns, 'use');
         tick.setAttribute('transform', `translate(${firstTickPos + i*spacing}, ${params.y})`);
-        tick.setAttributeNS(xlink, 'xlink:href', '#tickmark');
-        target.appendChild(tick);
-
-        //create SVG 'text' element for the corresponding number
-        let num = document.createElementNS(xmlns, 'text');
+        
+        let num;
+        if (existingNums[i]) {
+            num = existingNums[i];
+            num.classList.remove('noshow');
+        } else {
+            //create SVG 'text' element for the corresponding number
+            num = document.createElementNS(xmlns, 'text');
+            num.setAttribute('class', 'ticknumber');
+            target.appendChild(num);
+            num.insertAdjacentText('beforeend', '');
+        }
         let rev = 1;
         if (params.reverse == true) {rev = -1;}
-        num.setAttribute('class', 'ticknumber');
-        num.insertAdjacentText('beforeend', `${Math.round(rev*10*(firstTick + i*inc))/10}`);
-        target.appendChild(num);
+        num.childNodes[0].nodeValue = `${Math.round(rev*10*(firstTick + i*inc))/10}`;
         
         
         //get bounding boxes of the tick mark and the number, to provide coordinate info
@@ -236,7 +270,7 @@ function generateTickmarks (target, params) {
         //if the number will be rendered only partially, hide it. This is done with reference to the viewBox of
         //the surrounding SVG element.
         if (numBounds.x < svg_vals.x || numBounds.x + numBounds.width > svg_vals.x + svg_vals.width) {
-            num.style.display = 'none';
+            num.classList.add('noshow');
         }
     }
 }
@@ -328,10 +362,11 @@ function translateZero (inc) {
     updateParams(params_static);
     updateParams(params_dynamic);
     generateTickmarks(ticks_static, params_static);
-    generateTickmarks(ticks_dynamic, params_dynamic);
+    // generateTickmarks(ticks_dynamic, params_dynamic);
     //reposition the sliders
     range_scale.value = old_scale;
     if (range_scale.value == 0) {
+        console.log('help')
         range_scale.value = Math.sign(old_scale)*0.1;
     }
     range_eqn.value = map_value(old_eqn, params_static.min, params_static.max, 0, 100);
