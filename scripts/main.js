@@ -294,25 +294,25 @@ function updateParams(params) {
 }
 
 function positionLabel(label, range, overlap = false) {
-    let label_offset = -1;
-    let h = label.getBBox().height;
+    let label_offset = -2;
+    let h = label.getBBox().height - 1;
     let val100 = map_value(range.value, range.min, range.max, svg_vals.x, svg_vals.x + svg_vals.width);
 
 
     if(overlap == true) {
         if(svg_vals.x + svg_vals.width - val100 < h) {
-            label_offset = 2*h;
+            label_offset -= h;
         } else if (val100 < h) {
-            label_offset -=h;
+            label_offset = 2*h;
         } else {
             label_offset = h;
         }
-    } else if(svg_vals.x + svg_vals.width - val100  < h) {
+    } else if(val100  < h) {
             label_offset = h;
     } 
     
 
-    label.setAttribute('transform', `translate(${val100}, ${0.5*(params_static.y + params_dynamic.y)}) rotate(90) translate(0, ${label_offset})`);
+    label.setAttribute('transform', `translate(${val100}, ${0.5*(params_static.y + params_dynamic.y)}) rotate(270) translate(0, ${label_offset})`);
 }
 
 function updateSlider() {
