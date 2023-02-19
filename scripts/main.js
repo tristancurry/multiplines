@@ -87,12 +87,14 @@ if(params_static.min > 0 || params_static.max < 0) {
 //NB: there's a difference between input.value, and the input's HTML 'value' attribute
 range_eqn.addEventListener('input', event => { 
     if(scaling == false) {
-        //this is to prevent both sliders from being trapped together if they are manipulated while overlapping.
+        //this is to prevent  sliders from being trapped together if they are manipulated while overlapping.
         let r100 = map_value(range_scale.value, range_scale.min, range_scale.max, 0, 100);
         if (range_eqn.value >= r100 - OVERLAP_TOLERANCE && range_eqn.value <= r100 + OVERLAP_TOLERANCE) {
             range_scale.disabled = true;
+            range_zero.disabled = true;
         } else {
             range_scale.disabled = false;
+            range_zero.disabled = false;
         }
     }
     updateSlider();
@@ -156,8 +158,8 @@ function updateScaleFactor(n) {
 scale_factor = n;
 
 //this is clumsy - should just refuse to do anything that would require dividing by zero instead.
-    if(scale_factor == 0) {
-        scale_factor = 0.1;
+    if(Math.abs(scale_factor) < 0.1) {
+        scale_factor = Math.sign(scale_factor)*0.1;
         label_scale.setAttribute('y', -1);
     } else {
         label_scale.setAttribute('y', 0);
