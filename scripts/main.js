@@ -62,6 +62,7 @@ indicator.setAttribute('d', `m0 0v${params_dynamic.y - params_static.y}`);
 
 range_eqn.style.top = `${100*params_static.y/svg_vals.height}%`;
 range_scale.style.top = `${100*params_static.y/svg_vals.height}%`;
+range_zero.style.top = `${100*params_static.y/svg_vals.height}%`;
 
 let axesGap = svg_box.clientHeight*Math.abs(params_dynamic.y - params_static.y)/100;
 

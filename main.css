@@ -92,7 +92,7 @@ input[type="range"] {
     -webkit-appearance:none;
     height: var(--h);
     transform: var(--t);
-    width: 1%;
+    width: 1.5%;
     cursor: pointer;
     margin-top: 0px;
     pointer-events: auto !important;
@@ -103,7 +103,7 @@ input[type="range"] {
 .range_overlay::-moz-range-thumb {
     height: var(--h);
     transform: var(--t);
-    width: 1%;
+    width: 1.5%;
     cursor: pointer;
     margin-top: 0px;
     border-radius: 0px;
@@ -115,7 +115,7 @@ input[type="range"] {
 .range_overlay::-ms-thumb {
     height: var(--h);
     transform: var(--t);
-    width: 1%;
+    width: 1.5%;
     cursor: pointer;
     margin-top: 0px;
     pointer-events: auto !important;
