@@ -1,7 +1,12 @@
+const dpRounding = ROUNDING_DECIMAL_POINTS;
 let scale_factor = SCALE_FACTOR_DEFAULT;
 let divide = false; 
-const dpRounding = ROUNDING_DECIMAL_POINTS;
 let scaling = false;
+
+let static_axis_min = STATIC_AXIS_MIN;
+let static_axis_max = STATIC_AXIS_MAX;
+
+let zeroPos = 0;
 
 const xmlns = 'http://www.w3.org/2000/svg';
 const xlink = 'http://www.w3.org/1999/xlink';
@@ -27,7 +32,6 @@ const indicator = document.getElementById('indicator'); //this one is the templa
 const svg_static = document.getElementById('svg_static');
 const axis_static = document.getElementById('axis_static');
 const ticks_static = svg_static.getElementsByClassName('tickmarks')[0];
-const range_eqn = document.getElementById('range_eqn');
 
 const svg_dynamic = document.getElementById('svg_dynamic');
 const axis_dynamic = document.getElementById('axis_dynamic');
@@ -38,7 +42,9 @@ const label_slider = document.getElementById('label_slider');
 const label_group = document.getElementById('labels');
 
 
+const range_eqn = document.getElementById('range_eqn');
 const range_scale = document.getElementById('range_scale');
+const range_zero = document.getElementById('range_zero');
 range_scale.value = scale_factor;
 
 //from here there's a bunch of geometry and layout things.
@@ -92,7 +98,12 @@ range_scale.addEventListener('input', event => {
     if (range_eqn.value >= r100 - OVERLAP_TOLERANCE && range_eqn.value <= r100 + OVERLAP_TOLERANCE) {
         positionLabel(label_scale, range_scale, true);
     }
+});
 
+//set event listener on the zero-position slider
+range_zero.addEventListener('input', event => {
+    translateZero(range_zero.value - zeroPos);
+    zeroPos = range_zero.value;
 });
 
 
@@ -299,5 +310,32 @@ function curtailNumber (elm, dp) {
             elm.childNodes[0].nodeValue = newStr;
         }
     }
+}
+
+function translateZero (inc) {
+    //store current mapped values of range_eqn and range_scale so they can be re-mapped when scale moves
+    let old_scale = map_value(range_scale.value, range_scale.min, range_scale.max, params_static.min, params_static.max);
+    let old_eqn = map_value(range_eqn.value, 0, 100, params_static.min, params_static.max);
+    //change static params min and max
+    params_static.min += inc;
+    params_static.max += inc;
+    params_static.x = map_value(0, params_static.min, params_static.max, svg_vals.x, svg_vals.x + svg_vals.width);
+    params_dynamic.x = params_static.x;
+    range_scale.setAttribute('min', `${params_static.min}`);
+    range_scale.setAttribute('max', `${params_static.max}`);
+    //update dynamic params min and max to suit
+    //generate tickmarks for both axes
+    updateParams(params_static);
+    updateParams(params_dynamic);
+    generateTickmarks(ticks_static, params_static);
+    generateTickmarks(ticks_dynamic, params_dynamic);
+    //reposition the sliders
+    range_scale.value = old_scale;
+    if (range_scale.value == 0) {
+        range_scale.value = Math.sign(old_scale)*0.1;
+    }
+    range_eqn.value = map_value(old_eqn, params_static.min, params_static.max, 0, 100);
+    range_scale.dispatchEvent(new Event('input'));
+    
 
 }
