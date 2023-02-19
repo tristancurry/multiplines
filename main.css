@@ -195,3 +195,7 @@ text {
 #label_scale {
     fill: var(--sf-colour);
 }
+
+.noshow {
+    display: none;
+}

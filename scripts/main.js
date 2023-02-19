@@ -1,7 +1,12 @@
+const dpRounding = ROUNDING_DECIMAL_POINTS;
 let scale_factor = SCALE_FACTOR_DEFAULT;
 let divide = false; 
-const dpRounding = ROUNDING_DECIMAL_POINTS;
 let scaling = false;
+
+let static_axis_min = STATIC_AXIS_MIN;
+let static_axis_max = STATIC_AXIS_MAX;
+
+let zeroPos = 0;
 
 const xmlns = 'http://www.w3.org/2000/svg';
 const xlink = 'http://www.w3.org/1999/xlink';
@@ -27,7 +32,6 @@ const indicator = document.getElementById('indicator'); //this one is the templa
 const svg_static = document.getElementById('svg_static');
 const axis_static = document.getElementById('axis_static');
 const ticks_static = svg_static.getElementsByClassName('tickmarks')[0];
-const range_eqn = document.getElementById('range_eqn');
 
 const svg_dynamic = document.getElementById('svg_dynamic');
 const axis_dynamic = document.getElementById('axis_dynamic');
@@ -38,7 +42,9 @@ const label_slider = document.getElementById('label_slider');
 const label_group = document.getElementById('labels');
 
 
+const range_eqn = document.getElementById('range_eqn');
 const range_scale = document.getElementById('range_scale');
+const range_zero = document.getElementById('range_zero');
 range_scale.value = scale_factor;
 
 //from here there's a bunch of geometry and layout things.
@@ -67,17 +73,28 @@ document.documentElement.style.setProperty('--ticknumber-text-size', `${(params_
 if (EQUATION_COLOUR) {document.documentElement.style.setProperty('--thumb-colour', EQUATION_COLOUR)};
 if (SCALE_FACTOR_COLOUR) {document.documentElement.style.setProperty('--sf-colour', SCALE_FACTOR_COLOUR);}
 
+if(params_static.min > 0 || params_static.max < 0 || ZERO_DRAGGABLE !== true) {
+    range_zero.classList.add('noshow');
+} else {
+    range_zero.max = (params_static.max - params_static.min)/2;
+    range_zero.min = -1*range_zero.max;
+    zeroPos = map_value(0, range_zero.min, range_zero.max, params_static.min, params_static.max);
+    range_zero.value = zeroPos;
+}
+
 
 //set event listeners on the equation slider
 //NB: there's a difference between input.value, and the input's HTML 'value' attribute
 range_eqn.addEventListener('input', event => { 
     if(scaling == false) {
-        //this is to prevent both sliders from being trapped together if they are manipulated while overlapping.
+        //this is to prevent  sliders from being trapped together if they are manipulated while overlapping.
         let r100 = map_value(range_scale.value, range_scale.min, range_scale.max, 0, 100);
         if (range_eqn.value >= r100 - OVERLAP_TOLERANCE && range_eqn.value <= r100 + OVERLAP_TOLERANCE) {
             range_scale.disabled = true;
+            range_zero.disabled = true;
         } else {
             range_scale.disabled = false;
+            range_zero.disabled = false;
         }
     }
     updateSlider();
@@ -92,7 +109,16 @@ range_scale.addEventListener('input', event => {
     if (range_eqn.value >= r100 - OVERLAP_TOLERANCE && range_eqn.value <= r100 + OVERLAP_TOLERANCE) {
         positionLabel(label_scale, range_scale, true);
     }
+});
 
+//set event listener on the zero-position slider
+range_zero.addEventListener('input', event => {
+    if(Math.abs(range_zero.value) > 0.9*range_zero.max) {
+        range_zero.value = Math.sign(range_zero.value)*0.9*range_zero.max;
+    }
+    translateZero(range_zero.value - zeroPos);
+    zeroPos = range_zero.value;
+    indicator_zero.update(map_value(0, params_static.min, params_static.max, svg_vals.x, svg_vals.x + svg_vals.width));
 });
 
 
@@ -132,8 +158,8 @@ function updateScaleFactor(n) {
 scale_factor = n;
 
 //this is clumsy - should just refuse to do anything that would require dividing by zero instead.
-    if(scale_factor == 0) {
-        scale_factor = 0.1;
+    if(Math.abs(scale_factor) < 0.1) {
+        scale_factor = Math.sign(scale_factor)*0.1;
         label_scale.setAttribute('y', -1);
     } else {
         label_scale.setAttribute('y', 0);
@@ -173,10 +199,7 @@ scale_factor = n;
 //this is used to produce the SVG axis with appropriate spacings and numbering of tick marks
 function generateTickmarks (target, params) {
 
-    //remove existing tickmarks and numbers
-    while (target.firstChild) {
-        target.firstChild.remove();
-    }
+
 
     let inc = 1;
     let spacing = params.spacing;
@@ -197,22 +220,46 @@ function generateTickmarks (target, params) {
     let firstTickPos = map_value(firstTick, params.min, params.max, svg_vals.x, svg_vals.x + svg_vals.width);
     let n_ticks = Math.floor((svg_vals.width - firstTickPos)/spacing);
 
+    //set display of existing ticks and numbers to 'none'
+    //for performance reasons, it's better to do this via toggling class than manipulating .style on each element
+    let ticksandnums = target.childNodes;
+    let existingTicks = target.getElementsByTagName('use');
+    let existingNums = target.getElementsByTagName('text');
+
+    for (let i = 0, l = ticksandnums.length; i < l; i++) {
+        ticksandnums[i].classList.add('noshow');
+    }
+
 
     for (let i = 0; i <= n_ticks; i++) {
+        let tick;
+        //first see if an existing tickmark can be used
+        if (existingTicks[i]) {
+            tick = existingTicks[i];
+            tick.classList.remove('noshow');
+        } else {
+            //if not, create a 'clone' of the tickmark path specified in the SVG 'defs' element
+            tick = document.createElementNS(xmlns, 'use');
+            tick.setAttributeNS(xlink, 'xlink:href', '#tickmark');
+            target.appendChild(tick);
+        }
 
-        //create a 'clone' of the tickmark path specified in the SVG 'defs' element
-        let tick = document.createElementNS(xmlns, 'use');
         tick.setAttribute('transform', `translate(${firstTickPos + i*spacing}, ${params.y})`);
-        tick.setAttributeNS(xlink, 'xlink:href', '#tickmark');
-        target.appendChild(tick);
-
-        //create SVG 'text' element for the corresponding number
-        let num = document.createElementNS(xmlns, 'text');
+        
+        let num;
+        if (existingNums[i]) {
+            num = existingNums[i];
+            num.classList.remove('noshow');
+        } else {
+            //create SVG 'text' element for the corresponding number
+            num = document.createElementNS(xmlns, 'text');
+            num.setAttribute('class', 'ticknumber');
+            target.appendChild(num);
+            num.insertAdjacentText('beforeend', '');
+        }
         let rev = 1;
         if (params.reverse == true) {rev = -1;}
-        num.setAttribute('class', 'ticknumber');
-        num.insertAdjacentText('beforeend', `${Math.round(rev*10*(firstTick + i*inc))/10}`);
-        target.appendChild(num);
+        num.childNodes[0].nodeValue = `${Math.round(rev*10*(firstTick + i*inc))/10}`;
         
         
         //get bounding boxes of the tick mark and the number, to provide coordinate info
@@ -225,7 +272,7 @@ function generateTickmarks (target, params) {
         //if the number will be rendered only partially, hide it. This is done with reference to the viewBox of
         //the surrounding SVG element.
         if (numBounds.x < svg_vals.x || numBounds.x + numBounds.width > svg_vals.x + svg_vals.width) {
-            num.style.display = 'none';
+            num.classList.add('noshow');
         }
     }
 }
@@ -299,5 +346,33 @@ function curtailNumber (elm, dp) {
             elm.childNodes[0].nodeValue = newStr;
         }
     }
+}
+
+function translateZero (inc) {
+    //store current mapped values of range_eqn and range_scale so they can be re-mapped when scale moves
+    let old_scale = map_value(range_scale.value, range_scale.min, range_scale.max, params_static.min, params_static.max);
+    let old_eqn = map_value(range_eqn.value, 0, 100, params_static.min, params_static.max);
+    //change static params min and max
+    params_static.min += inc;
+    params_static.max += inc;
+    params_static.x = map_value(0, params_static.min, params_static.max, svg_vals.x, svg_vals.x + svg_vals.width);
+    params_dynamic.x = params_static.x;
+    range_scale.setAttribute('min', `${params_static.min}`);
+    range_scale.setAttribute('max', `${params_static.max}`);
+    //update dynamic params min and max to suit
+    //generate tickmarks for both axes
+    updateParams(params_static);
+    updateParams(params_dynamic);
+    generateTickmarks(ticks_static, params_static);
+    // generateTickmarks(ticks_dynamic, params_dynamic);
+    //reposition the sliders
+    range_scale.value = old_scale;
+    if (range_scale.value == 0) {
+        console.log('help')
+        range_scale.value = Math.sign(old_scale)*0.1;
+    }
+    range_eqn.value = map_value(old_eqn, params_static.min, params_static.max, 0, 100);
+    range_scale.dispatchEvent(new Event('input'));
+    
 
 }
