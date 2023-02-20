@@ -167,20 +167,8 @@ indicator_one.render(svg_box);
 function updateScaleFactor(n) {
 scale_factor = n;
 
-//this is clumsy - should just refuse to do anything that would require dividing by zero instead.
-    // if(scale_factor == 0) {
-    //     scale_factor = 0.1;
-    //     label_scale.setAttribute('y', 1);
-    // } else
-    // if(Math.abs(scale_factor) < 0.1) {
-    //     scale_factor = Math.sign(scale_factor)*0.1;
-    //     label_scale.setAttribute('y', -1);
-    // } else {
-    //     label_scale.setAttribute('y', 0);
-    // }
 
-
-    if(Math.abs(scale_factor) < 0.01*(range_scale.max - range_scale.min)) {
+    if(Math.abs(scale_factor) < 0.0001*(range_scale.max - range_scale.min)) {
         scale_factor = 0;
     }
 
