@@ -129,6 +129,10 @@ range_zero.addEventListener('input', event => {
 //set event listeners on buttons
 zoomIn.addEventListener('click', event => {
     //reduce the span of numbers visible by a certain percentage
+    //change the max and min of both axes by same factor
+    params_static.max *=2;
+    params_static.min *=2;
+    updateParams(params_static);
 });
 
 
@@ -215,15 +219,16 @@ function generateTickmarks (target, params) {
 
     //this spacing stuff is a bit hacky, and could be done better.
     //if spacing is too big, inject intermediate tick marks...
-    while (spacing > 45) {
+    while (spacing > svg_vals.width/5) {
         spacing = spacing/5;
         inc = inc/5;
     }
     //if spacing is too tight, remove tick marks
-    while (spacing < 6) {
+    while (spacing < svg_vals.width/20) {
         spacing = spacing*5;
         inc = inc*5;
     }
+
 
     let firstTick = inc*Math.ceil(params.min/inc);
     let firstTickPos = map_value(firstTick, params.min, params.max, svg_vals.x, svg_vals.x + svg_vals.width);
@@ -235,10 +240,20 @@ function generateTickmarks (target, params) {
     let existingTicks = target.getElementsByTagName('use');
     let existingNums = target.getElementsByTagName('text');
 
+    // let numWidth = 0
+    // for (let i = 0, l = existingNums.length; i < l; i++) {
+    //     let thisNum = existingNums[i];
+    //     let thisWidth = thisNum.getBBox().width;
+    //     if (thisWidth > numWidth) {numWidth = thisWidth;}
+    // }
+    // console.log(numWidth);
+
+
     for (let i = 0, l = ticksandnums.length; i < l; i++) {
         ticksandnums[i].classList.add('noshow');
     }
 
+    
 
     for (let i = 0; i <= n_ticks; i++) {
         let tick;
