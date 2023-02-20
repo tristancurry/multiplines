@@ -83,7 +83,7 @@ if(params_static.min > 0 || params_static.max < 0 || ZERO_DRAGGABLE !== true) {
 } else {
     range_zero.max = (params_static.max - params_static.min)/2;
     range_zero.min = -1*range_zero.max;
-    zeroPos = map_value(0, range_zero.min, range_zero.max, params_static.min, params_static.max);
+    zeroPos = map_range(0, range_zero, params_static);
     range_zero.value = zeroPos;
 }
 
@@ -93,8 +93,8 @@ if(params_static.min > 0 || params_static.max < 0 || ZERO_DRAGGABLE !== true) {
 range_eqn.addEventListener('input', event => { 
     if(scaling == false) {
         //this is to prevent  sliders from being trapped together if they are manipulated while overlapping.
-        let r100 = map_value(range_scale.value, range_scale.min, range_scale.max, 0, 100);
-        if (range_eqn.value >= r100 - OVERLAP_TOLERANCE && range_eqn.value <= r100 + OVERLAP_TOLERANCE) {
+        let eqn_pos = map_range(range_scale.value, range_scale, range_eqn);
+        if (range_eqn.value >= eqn_pos - OVERLAP_TOLERANCE && range_eqn.value <= eqn_pos + OVERLAP_TOLERANCE) {
             range_scale.disabled = true;
             range_zero.disabled = true;
         } else {
@@ -110,8 +110,8 @@ range_scale.addEventListener('input', event => {
     scale_factor = parseFloat(range_scale.value);
     positionLabel(label_scale, range_scale);
     updateScaleFactor(scale_factor);
-    let r100 = map_value(range_scale.value, range_scale.min, range_scale.max, 0, 100);
-    if (range_eqn.value >= r100 - OVERLAP_TOLERANCE && range_eqn.value <= r100 + OVERLAP_TOLERANCE) {
+    let eqn_pos = map_value(range_scale.value, range_scale, range_eqn);
+    if (range_eqn.value >= eqn_pos - OVERLAP_TOLERANCE && range_eqn.value <= eqn_pos + OVERLAP_TOLERANCE) {
         positionLabel(label_scale, range_scale, true);
     }
 });
@@ -126,14 +126,8 @@ range_zero.addEventListener('input', event => {
     indicator_zero.update(map_value(0, params_static.min, params_static.max, svg_vals.x, svg_vals.x + svg_vals.width));
 });
 
-//set event listeners on buttons
-zoomIn.addEventListener('click', event => {
-    //reduce the span of numbers visible by a certain percentage
-    //change the max and min of both axes by same factor
-    params_static.max *=2;
-    params_static.min *=2;
-    updateParams(params_static);
-});
+
+
 
 
 //initial setup based on static and dynamic parameters (primarily static 'spacing' and 0 position (origin.x))
@@ -355,6 +349,11 @@ function map_value(value, min_old, max_old, min_new, max_new) {
     return (p*(max_new - min_new) + min_new);
 }
 
+function map_range(value, range_old, range_new) {
+    let p = map_value(value, range_old.min, range_old.max, range_new.min, range_new.max);
+    return p;
+}
+
 //round to a given number of decimal points
 function roundToDP (value, dp) {
     return (Math.round(value * (10**dp))/10**dp);
@@ -400,5 +399,4 @@ function translateZero (inc) {
     range_eqn.value = map_value(old_eqn, params_static.min, params_static.max, 0, 100);
     range_scale.dispatchEvent(new Event('input'));
     
-
 }
