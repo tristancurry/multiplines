@@ -202,8 +202,6 @@ scale_factor = n;
 //this is used to produce the SVG axis with appropriate spacings and numbering of tick marks
 function generateTickmarks (target, params) {
 
-
-
     let inc = 1;
     let spacing = params.spacing;
 
