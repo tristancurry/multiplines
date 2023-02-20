@@ -26,6 +26,7 @@ if(ASPECT_RATIO) {
 }
 
 let svg_vals = svg_box.viewBox.baseVal;
+let svg_limits = {min: svg_vals.x, max: svg_vals.x + svg_vals.width};
 
 const indicator = document.getElementById('indicator'); //this one is the template for all indicators
 
@@ -53,7 +54,7 @@ const zoomOut = document.getElementById('zoomOut');
 
 //from here there's a bunch of geometry and layout things.
 //TODO: bundle into a 'refresh' function that can be called if the geometry needs to be changed dynamically
-const params_static = {min:STATIC_AXIS_MIN, max:STATIC_AXIS_MAX, x:map_value(0, STATIC_AXIS_MIN, STATIC_AXIS_MAX, svg_vals.x, svg_vals.x + svg_vals.width), y:svg_vals.y + 2*TICKMARK_HEIGHT, spacing:svg_vals.width/(STATIC_AXIS_MAX - STATIC_AXIS_MIN), reverse:false};
+const params_static = {min:STATIC_AXIS_MIN, max:STATIC_AXIS_MAX, x:map_value(0, STATIC_AXIS_MIN, STATIC_AXIS_MAX, svg_limits.min, svg_limits.max), y:svg_vals.y + 2*TICKMARK_HEIGHT, spacing:svg_vals.width/(STATIC_AXIS_MAX - STATIC_AXIS_MIN), reverse:false};
 const params_dynamic = {x:params_static.x, y:svg_vals.y + svg_vals.height - 2*TICKMARK_HEIGHT, reverse:false};
 range_scale.setAttribute('min', `${params_static.min}`);
 range_scale.setAttribute('max', `${params_static.max}`);
@@ -110,7 +111,7 @@ range_scale.addEventListener('input', event => {
     scale_factor = parseFloat(range_scale.value);
     positionLabel(label_scale, range_scale);
     updateScaleFactor(scale_factor);
-    let eqn_pos = map_value(range_scale.value, range_scale, range_eqn);
+    let eqn_pos = map_range(range_scale.value, range_scale, range_eqn);
     if (range_eqn.value >= eqn_pos - OVERLAP_TOLERANCE && range_eqn.value <= eqn_pos + OVERLAP_TOLERANCE) {
         positionLabel(label_scale, range_scale, true);
     }
@@ -123,39 +124,34 @@ range_zero.addEventListener('input', event => {
     }
     translateZero(range_zero.value - zeroPos);
     zeroPos = range_zero.value;
-    indicator_zero.update(map_value(0, params_static.min, params_static.max, svg_vals.x, svg_vals.x + svg_vals.width));
+    indicator_zero.update(map_range(0, params_static, svg_limits));
 });
 
-
-
-
-
-//initial setup based on static and dynamic parameters (primarily static 'spacing' and 0 position (origin.x))
+//initial setup based on static and dynamic parameters (primarily static 'spacing' and 0 position (params.x))
 updateParams(params_static);
 generateTickmarks(ticks_static, params_static);
 updateParams(params_dynamic);
 
-
 const indicator_zero = new Indicator(svg_vals.x, 0, false, 'indicator_zero');
-const indicator_one = new Indicator(svg_vals.x, 0, true, 'indicator_one');
-const indicator_slider = new Indicator(svg_vals.x, 0, true, 'indicator_slider');
+const indicator_scale = new Indicator(svg_vals.x, 0, true, 'indicator_scale');
+const indicator_eqn = new Indicator(svg_vals.x, 0, true, 'indicator_eqn');
 
 range_scale.dispatchEvent(new Event('input'));
 
-range_eqn.value = map_value(0, params_static.min, params_static.max, svg_vals.x, svg_vals.x + svg_vals.width);
+range_eqn.value = map_range(0, params_static, svg_limits);
 range_eqn.dispatchEvent(new Event('input'));
 
 indicator_zero.y = params_static.y;
-indicator_zero.update(map_value(0, params_static.min, params_static.max, svg_vals.x, svg_vals.x + svg_vals.width));
+indicator_zero.update(map_range(0, params_static, svg_limits));
 indicator_zero.render(svg_box);
 
-indicator_slider.y = params_static.y;
+indicator_eqn.y = params_static.y;
 updateSlider();
-indicator_slider.render(svg_box);
+indicator_eqn.render(svg_box);
 
-indicator_one.y = params_static.y;
-indicator_one.update(map_value(1, params_dynamic.min, params_dynamic.max, svg_vals.x, svg_vals.x + svg_vals.width));
-indicator_one.render(svg_box);
+indicator_scale.y = params_static.y;
+indicator_scale.update(map_range(1, params_dynamic, svg_limits));
+indicator_scale.render(svg_box);
 
 
 
@@ -170,7 +166,7 @@ scale_factor = n;
         scale_factor = 0;
     }
 
-    let currentMappedValue = map_value(range_eqn.value, 0, 100, params_dynamic.min, params_dynamic.max);
+    let currentMappedValue = map_range(range_eqn.value, range_eqn, params_dynamic);
     params_dynamic.spacing = Math.abs(scale_factor)*params_static.spacing;
     if(scale_factor !== 0) {
     updateParams(params_dynamic);
@@ -193,8 +189,8 @@ scale_factor = n;
     
     //Update positions of UI elements. Really these could be grouped for convenience and lighter code.
 }
-    range_eqn.value = map_value(currentMappedValue, params_dynamic.min, params_dynamic.max, 0, 100);
-    indicator_one.update(map_value(Math.sign(scale_factor)*1, params_dynamic.min, params_dynamic.max, svg_vals.x, svg_vals.x + svg_vals.width));
+    range_eqn.value = map_range(currentMappedValue, params_dynamic, range_eqn);
+    indicator_scale.update(map_range(Math.sign(scale_factor)*1, params_dynamic, svg_limits));
     label_scale.childNodes[0].nodeValue = `Scale factor = ${roundToDP(scale_factor, dpRounding)}`;
 
     //This is to stop the range_scale from being disabled while dragging into over the range_eqn thumb.
@@ -225,7 +221,7 @@ function generateTickmarks (target, params) {
 
 
     let firstTick = inc*Math.ceil(params.min/inc);
-    let firstTickPos = map_value(firstTick, params.min, params.max, svg_vals.x, svg_vals.x + svg_vals.width);
+    let firstTickPos = map_range(firstTick, params, svg_limits);
     let n_ticks = Math.floor((svg_vals.width - firstTickPos)/spacing);
 
     //set display of existing ticks and numbers to 'none'
@@ -314,7 +310,7 @@ function updateParams(params) {
 function positionLabel(label, range, overlap = false) {
     let label_offset = -2;
     let h = label.getBBox().height - 1;
-    let val100 = map_value(range.value, range.min, range.max, svg_vals.x, svg_vals.x + svg_vals.width);
+    let val100 = map_range(range.value, range, svg_limits);
 
 
     if(overlap == true) {
@@ -335,8 +331,8 @@ function positionLabel(label, range, overlap = false) {
 
 function updateSlider() {
     positionLabel(label_slider, range_eqn, range_scale.disabled);
-    let mappedValue = map_value(range_eqn.value, 0, 100, params_dynamic.min, params_dynamic.max);
-    indicator_slider.update(map_value(range_eqn.value, 0, 100, svg_vals.x, svg_vals.x + svg_vals.width));
+    let mappedValue = map_range(range_eqn.value, range_eqn, params_dynamic);
+    indicator_eqn.update(map_range(range_eqn.value, range_eqn, svg_limits));
     let sign = Math.sign(scale_factor);
     if (sign == 0) {sign = 1;}
     label_slider.childNodes[0].nodeValue = `${roundToDP(sign*mappedValue, dpRounding)} x ${roundToDP(scale_factor, dpRounding)} = ${roundToDP(roundToDP(Math.sign(scale_factor)*mappedValue, dpRounding)*roundToDP(scale_factor, dpRounding), 8)}`;
@@ -375,12 +371,12 @@ function curtailNumber (elm, dp) {
 
 function translateZero (inc) {
     //store current mapped values of range_eqn and range_scale so they can be re-mapped when scale moves
-    let old_scale = map_value(range_scale.value, range_scale.min, range_scale.max, params_static.min, params_static.max);
-    let old_eqn = map_value(range_eqn.value, 0, 100, params_static.min, params_static.max);
+    let old_scale = map_range(range_scale.value, range_scale, params_static);
+    let old_eqn = map_range(range_eqn.value, range_eqn, params_static);
     //change static params min and max
     params_static.min += inc;
     params_static.max += inc;
-    params_static.x = map_value(0, params_static.min, params_static.max, svg_vals.x, svg_vals.x + svg_vals.width);
+    params_static.x = map_range(0, params_static, svg_limits);
     params_dynamic.x = params_static.x;
     range_scale.setAttribute('min', `${params_static.min}`);
     range_scale.setAttribute('max', `${params_static.max}`);
@@ -389,14 +385,14 @@ function translateZero (inc) {
     updateParams(params_static);
     updateParams(params_dynamic);
     generateTickmarks(ticks_static, params_static);
-    // generateTickmarks(ticks_dynamic, params_dynamic);
+
     //reposition the sliders
     range_scale.value = old_scale;
     if (range_scale.value == 0) {
         console.log('help')
         range_scale.value = Math.sign(old_scale)*0.1;
     }
-    range_eqn.value = map_value(old_eqn, params_static.min, params_static.max, 0, 100);
+    range_eqn.value = map_range(old_eqn, params_static, range_eqn);
     range_scale.dispatchEvent(new Event('input'));
     
 }

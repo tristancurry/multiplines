@@ -172,12 +172,12 @@ text {
     stroke-width: 0.5px;
 }
 
-.indicator_one {
+.indicator_scale {
     stroke: var(--sf-colour);
     stroke-width: 0.5px;
 }
 
-.indicator_slider {
+.indicator_eqn {
     stroke: var(--thumb-colour);
     stroke-width: 1px;
 }
