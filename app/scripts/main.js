@@ -159,6 +159,10 @@ function updateScaleFactor(n) {
 scale_factor = n;
 
 //this is clumsy - should just refuse to do anything that would require dividing by zero instead.
+    if(scale_factor == 0) {
+        scale_factor = 0.1;
+        label_scale.setAttribute('y', 1);
+    } else
     if(Math.abs(scale_factor) < 0.1) {
         scale_factor = Math.sign(scale_factor)*0.1;
         label_scale.setAttribute('y', -1);
