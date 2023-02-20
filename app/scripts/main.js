@@ -103,7 +103,7 @@ range_eqn.addEventListener('input', event => {
             range_zero.disabled = false;
         }
     }
-    updateSlider();
+    updateEqn();
 });
 
 //set event listener on the scale-factor slider
@@ -146,7 +146,7 @@ indicator_zero.update(map_range(0, params_static, svg_limits));
 indicator_zero.render(svg_box);
 
 indicator_eqn.y = params_static.y;
-updateSlider();
+updateEqn();
 indicator_eqn.render(svg_box);
 
 indicator_scale.y = params_static.y;
@@ -161,14 +161,14 @@ indicator_scale.render(svg_box);
 function updateScaleFactor(n) {
 scale_factor = n;
 
-
     if(Math.abs(scale_factor) < 0.0001*(range_scale.max - range_scale.min)) {
         scale_factor = 0;
     }
 
     let currentMappedValue = map_range(range_eqn.value, range_eqn, params_dynamic);
     params_dynamic.spacing = Math.abs(scale_factor)*params_static.spacing;
-    if(scale_factor !== 0) {
+    
+    if (scale_factor !== 0) {
     updateParams(params_dynamic);
     generateTickmarks(ticks_dynamic, params_dynamic);
 
@@ -229,15 +229,6 @@ function generateTickmarks (target, params) {
     let ticksandnums = target.childNodes;
     let existingTicks = target.getElementsByTagName('use');
     let existingNums = target.getElementsByTagName('text');
-
-    // let numWidth = 0
-    // for (let i = 0, l = existingNums.length; i < l; i++) {
-    //     let thisNum = existingNums[i];
-    //     let thisWidth = thisNum.getBBox().width;
-    //     if (thisWidth > numWidth) {numWidth = thisWidth;}
-    // }
-    // console.log(numWidth);
-
 
     for (let i = 0, l = ticksandnums.length; i < l; i++) {
         ticksandnums[i].classList.add('noshow');
@@ -329,7 +320,7 @@ function positionLabel(label, range, overlap = false) {
     label.setAttribute('transform', `translate(${val100}, ${0.5*(params_static.y + params_dynamic.y)}) rotate(270) translate(0, ${label_offset})`);
 }
 
-function updateSlider() {
+function updateEqn() {
     positionLabel(label_slider, range_eqn, range_scale.disabled);
     let mappedValue = map_range(range_eqn.value, range_eqn, params_dynamic);
     indicator_eqn.update(map_range(range_eqn.value, range_eqn, svg_limits));
