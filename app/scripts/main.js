@@ -47,6 +47,10 @@ const range_scale = document.getElementById('range_scale');
 const range_zero = document.getElementById('range_zero');
 range_scale.value = scale_factor;
 
+const zoomIn = document.getElementById('zoomIn');
+const zoomOut = document.getElementById('zoomOut');
+
+
 //from here there's a bunch of geometry and layout things.
 //TODO: bundle into a 'refresh' function that can be called if the geometry needs to be changed dynamically
 const params_static = {min:STATIC_AXIS_MIN, max:STATIC_AXIS_MAX, x:map_value(0, STATIC_AXIS_MIN, STATIC_AXIS_MAX, svg_vals.x, svg_vals.x + svg_vals.width), y:svg_vals.y + 2*TICKMARK_HEIGHT, spacing:svg_vals.width/(STATIC_AXIS_MAX - STATIC_AXIS_MIN), reverse:false};
@@ -122,6 +126,11 @@ range_zero.addEventListener('input', event => {
     indicator_zero.update(map_value(0, params_static.min, params_static.max, svg_vals.x, svg_vals.x + svg_vals.width));
 });
 
+//set event listeners on buttons
+zoomIn.addEventListener('click', event => {
+    //reduce the span of numbers visible by a certain percentage
+});
+
 
 //initial setup based on static and dynamic parameters (primarily static 'spacing' and 0 position (origin.x))
 updateParams(params_static);
@@ -159,19 +168,25 @@ function updateScaleFactor(n) {
 scale_factor = n;
 
 //this is clumsy - should just refuse to do anything that would require dividing by zero instead.
-    if(scale_factor == 0) {
-        scale_factor = 0.1;
-        label_scale.setAttribute('y', 1);
-    } else
-    if(Math.abs(scale_factor) < 0.1) {
-        scale_factor = Math.sign(scale_factor)*0.1;
-        label_scale.setAttribute('y', -1);
-    } else {
-        label_scale.setAttribute('y', 0);
+    // if(scale_factor == 0) {
+    //     scale_factor = 0.1;
+    //     label_scale.setAttribute('y', 1);
+    // } else
+    // if(Math.abs(scale_factor) < 0.1) {
+    //     scale_factor = Math.sign(scale_factor)*0.1;
+    //     label_scale.setAttribute('y', -1);
+    // } else {
+    //     label_scale.setAttribute('y', 0);
+    // }
+
+
+    if(Math.abs(scale_factor) < 0.01*(range_scale.max - range_scale.min)) {
+        scale_factor = 0;
     }
 
     let currentMappedValue = map_value(range_eqn.value, 0, 100, params_dynamic.min, params_dynamic.max);
     params_dynamic.spacing = Math.abs(scale_factor)*params_static.spacing;
+    if(scale_factor !== 0) {
     updateParams(params_dynamic);
     generateTickmarks(ticks_dynamic, params_dynamic);
 
@@ -189,9 +204,10 @@ scale_factor = n;
         }
     }
 
-    range_eqn.value = map_value(currentMappedValue, params_dynamic.min, params_dynamic.max, 0, 100);
-
+    
     //Update positions of UI elements. Really these could be grouped for convenience and lighter code.
+}
+    range_eqn.value = map_value(currentMappedValue, params_dynamic.min, params_dynamic.max, 0, 100);
     indicator_one.update(map_value(Math.sign(scale_factor)*1, params_dynamic.min, params_dynamic.max, svg_vals.x, svg_vals.x + svg_vals.width));
     label_scale.childNodes[0].nodeValue = `Scale factor = ${roundToDP(scale_factor, dpRounding)}`;
 
@@ -324,7 +340,9 @@ function updateSlider() {
     positionLabel(label_slider, range_eqn, range_scale.disabled);
     let mappedValue = map_value(range_eqn.value, 0, 100, params_dynamic.min, params_dynamic.max);
     indicator_slider.update(map_value(range_eqn.value, 0, 100, svg_vals.x, svg_vals.x + svg_vals.width));
-    label_slider.childNodes[0].nodeValue = `${roundToDP(Math.sign(scale_factor)*mappedValue, dpRounding)} x ${roundToDP(scale_factor, dpRounding)} = ${roundToDP(roundToDP(Math.sign(scale_factor)*mappedValue, dpRounding)*roundToDP(scale_factor, dpRounding), 8)}`;
+    let sign = Math.sign(scale_factor);
+    if (sign == 0) {sign = 1;}
+    label_slider.childNodes[0].nodeValue = `${roundToDP(sign*mappedValue, dpRounding)} x ${roundToDP(scale_factor, dpRounding)} = ${roundToDP(roundToDP(Math.sign(scale_factor)*mappedValue, dpRounding)*roundToDP(scale_factor, dpRounding), 8)}`;
     curtailNumber(label_slider, dpRounding + 1);
 }
 
