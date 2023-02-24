@@ -52,11 +52,13 @@ range_scale.value = scale_factor;
 const zoomIn = document.getElementById('zoomIn');
 const zoomOut = document.getElementById('zoomOut');
 
+const numbers_static = document.getElementById('numbers_static');
+const numbers_dynamic = document.getElementById('numbers_dynamic');
 
 //from here there's a bunch of geometry and layout things.
 //TODO: bundle into a 'refresh' function that can be called if the geometry needs to be changed dynamically
-const params_static = {min:STATIC_AXIS_MIN, max:STATIC_AXIS_MAX, x:map_value(0, STATIC_AXIS_MIN, STATIC_AXIS_MAX, svg_limits.min, svg_limits.max), y:svg_vals.y + 2*TICKMARK_HEIGHT, spacing:svg_vals.width/(STATIC_AXIS_MAX - STATIC_AXIS_MIN), reverse:false, div:'numbers_static'};
-const params_dynamic = {x:params_static.x, y:svg_vals.y + svg_vals.height - 2*TICKMARK_HEIGHT, reverse:false, div:'numbers_dynamic'};
+const params_static = {min:STATIC_AXIS_MIN, max:STATIC_AXIS_MAX, x:map_value(0, STATIC_AXIS_MIN, STATIC_AXIS_MAX, svg_limits.min, svg_limits.max), y:svg_vals.y + 2*TICKMARK_HEIGHT, spacing:svg_vals.width/(STATIC_AXIS_MAX - STATIC_AXIS_MIN), reverse:false, div:numbers_static};
+const params_dynamic = {x:params_static.x, y:svg_vals.y + svg_vals.height - 2*TICKMARK_HEIGHT, reverse:false, div:numbers_dynamic};
 
 
 range_scale.setAttribute('min', `${params_static.min}`);
@@ -133,7 +135,7 @@ range_zero.addEventListener('input', event => {
 //initial setup based on static and dynamic parameters (primarily static 'spacing' and 0 position (params.x))
 updateParams(params_static);
 generateTickmarks(ticks_static, params_static);
-generateAxisNumbers(ticks_static, params_static);
+generateAxisNumbers(params_static.div, params_static);
 updateParams(params_dynamic);
 
 const indicator_zero = new Indicator(svg_vals.x, 0, false, 'indicator_zero');
@@ -175,7 +177,7 @@ scale_factor = n;
     if (scale_factor !== 0) {
     updateParams(params_dynamic);
     generateTickmarks(ticks_dynamic, params_dynamic);
-    generateAxisNumbers(ticks_dynamic, params_dynamic);
+    generateAxisNumbers(params_dynamic.div, params_dynamic);
 
     //this causes only a cosmetic change when rendering the axes - just plonks a negative sign out the front
     //gonna need to do something with the 'currentMappedValue' so that the slider tracks into the correct side of zero.
@@ -255,8 +257,9 @@ function generateAxisNumbers(target, params) {
     let spacing = tickInfo.spacing;
     let inc = tickInfo.inc;
 
-    let existingNums = target.getElementsByTagName('text');
+    let existingNums = target.getElementsByClassName('ticknumber');
     let tickHeight = document.getElementsByClassName('tickmark')[0].getBBox().height;
+    
 
     for (let i = 0; i <= n_ticks; i++) {
 
@@ -266,7 +269,7 @@ function generateAxisNumbers(target, params) {
                 num.classList.remove('noshow');
             } else {
                 //create SVG 'text' element for the corresponding number
-                num = document.createElementNS(xmlns, 'text');
+                num = document.createElement('div');
                 num.setAttribute('class', 'ticknumber');
                 target.appendChild(num);
                 num.insertAdjacentText('beforeend', '');
@@ -278,10 +281,11 @@ function generateAxisNumbers(target, params) {
             
             //get bounding boxes of the tick mark and the number, to provide coordinate info
             //for vertical positioning of numbers.
-            num.setAttribute('x', `${firstTickPos + i*spacing}`);
-            num.setAttribute('y', `${params.y + 0.5*tickHeight}`);
-            let numBounds = num.getBBox();
-            num.setAttribute('transform', `translate(0, ${0.9*numBounds.height})`);
+            // num.setAttribute('x', `${firstTickPos + i*spacing}`);
+            // num.setAttribute('y', `${params.y + 0.5*tickHeight}`);
+            let numBounds = num.getBoundingClientRect();
+            console.log(numBounds);
+            num.style.transform = `translate3d(${firstTickPos + i*spacing}px, ${0.9*numBounds.height + params.y + 0.5*tickHeight}px, 0px)`;
             //if the number will be rendered only partially, hide it. This is done with reference to the viewBox of
             //the surrounding SVG element.
             if (numBounds.x < svg_vals.x || numBounds.x + numBounds.width > svg_vals.x + svg_vals.width) {
@@ -410,7 +414,7 @@ function translateZero (inc) {
     updateParams(params_static);
     updateParams(params_dynamic);
     generateTickmarks(ticks_static, params_static);
-    generateAxisNumbers(ticks_static, params_static);
+    generateAxisNumbers(params_static.div, params_static);
 
     //reposition the sliders
     range_scale.value = old_scale;

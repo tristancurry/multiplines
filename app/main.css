@@ -2,7 +2,7 @@
     --thumb-colour: rgb(0, 145, 255);
     --sf-colour: rgb(255, 80, 80);
     --label-text-size: 6px;
-    --ticknumber-text-size: 6px;
+    --ticknumber-text-size: 16px;
     --t: translateY(50px);
     --h: 100px;
 }
@@ -146,6 +146,7 @@ input[type="range"] {
 }
 
 .ticknumber {
+    position: absolute;
     font-size: var(--ticknumber-text-size);
     fill: black;
     stroke: none;
