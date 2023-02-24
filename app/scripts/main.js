@@ -130,6 +130,7 @@ range_zero.addEventListener('input', event => {
 //initial setup based on static and dynamic parameters (primarily static 'spacing' and 0 position (params.x))
 updateParams(params_static);
 generateTickmarks(ticks_static, params_static);
+generateAxisNumbers(ticks_static, params_static);
 updateParams(params_dynamic);
 
 const indicator_zero = new Indicator(svg_vals.x, 0, false, 'indicator_zero');
@@ -171,6 +172,7 @@ scale_factor = n;
     if (scale_factor !== 0) {
     updateParams(params_dynamic);
     generateTickmarks(ticks_dynamic, params_dynamic);
+    generateAxisNumbers(ticks_dynamic, params_dynamic);
 
     //this causes only a cosmetic change when rendering the axes - just plonks a negative sign out the front
     //gonna need to do something with the 'currentMappedValue' so that the slider tracks into the correct side of zero.
@@ -202,25 +204,13 @@ scale_factor = n;
 //this is used to produce the SVG axis with appropriate spacings and numbering of tick marks
 function generateTickmarks (target, params) {
 
-    let inc = 1;
-    let spacing = params.spacing;
+    let tickInfo = tickPositioning(params);
 
-    //this spacing stuff is a bit hacky, and could be done better.
-    //if spacing is too big, inject intermediate tick marks...
-    while (spacing > svg_vals.width/5) {
-        spacing = spacing/5;
-        inc = inc/5;
-    }
-    //if spacing is too tight, remove tick marks
-    while (spacing < svg_vals.width/20) {
-        spacing = spacing*5;
-        inc = inc*5;
-    }
-
-
-    let firstTick = inc*Math.ceil(params.min/inc);
-    let firstTickPos = map_range(firstTick, params, svg_limits);
-    let n_ticks = Math.floor((svg_vals.width - firstTickPos)/spacing);
+    let firstTick = tickInfo.first;
+    let firstTickPos = tickInfo.firstPos;
+    let n_ticks = tickInfo.n;
+    let spacing = tickInfo.spacing;
+    let inc = tickInfo.inc;
 
     //set display of existing ticks and numbers to 'none'
     //for performance reasons, it's better to do this via toggling class than manipulating .style on each element
@@ -243,43 +233,115 @@ function generateTickmarks (target, params) {
         } else {
             //if not, create a 'clone' of the tickmark path specified in the SVG 'defs' element
             tick = document.createElementNS(xmlns, 'use');
-            tick.setAttributeNS(xlink, 'xlink:href', '#tickmark');
+            tick.setAttributeNS(xlink, 'xlink:href', '#tickmark-template');
+            tick.classList.add('tickmark');
             target.appendChild(tick);
         }
 
         tick.setAttribute('transform', `translate(${firstTickPos + i*spacing}, ${params.y})`);
         
-        let num;
-        if (existingNums[i]) {
-            num = existingNums[i];
-            num.classList.remove('noshow');
-        } else {
-            //create SVG 'text' element for the corresponding number
-            num = document.createElementNS(xmlns, 'text');
-            num.setAttribute('class', 'ticknumber');
-            target.appendChild(num);
-            num.insertAdjacentText('beforeend', '');
-        }
-        let rev = 1;
-        if (params.reverse == true) {rev = -1;}
-        num.childNodes[0].nodeValue = `${Math.round(rev*10*(firstTick + i*inc))/10}`;
+        // let num;
+        // if (existingNums[i]) {
+        //     num = existingNums[i];
+        //     num.classList.remove('noshow');
+        // } else {
+        //     //create SVG 'text' element for the corresponding number
+        //     num = document.createElementNS(xmlns, 'text');
+        //     num.setAttribute('class', 'ticknumber');
+        //     target.appendChild(num);
+        //     num.insertAdjacentText('beforeend', '');
+        // }
+        // let rev = 1;
+        // if (params.reverse == true) {rev = -1;}
+        // num.childNodes[0].nodeValue = `${Math.round(rev*10*(firstTick + i*inc))/10}`;
         
         
-        //get bounding boxes of the tick mark and the number, to provide coordinate info
-        //for vertical positioning of numbers.
-        let tickBounds = tick.getBBox();
-        num.setAttribute('x', `${firstTickPos + i*spacing}`);
-        num.setAttribute('y', `${params.y + 0.5*tickBounds.height}`);
-        let numBounds = num.getBBox();
-        num.setAttribute('transform', `translate(0, ${0.9*numBounds.height})`);
-        //if the number will be rendered only partially, hide it. This is done with reference to the viewBox of
-        //the surrounding SVG element.
-        if (numBounds.x < svg_vals.x || numBounds.x + numBounds.width > svg_vals.x + svg_vals.width) {
-            num.classList.add('noshow');
-        }
+        // //get bounding boxes of the tick mark and the number, to provide coordinate info
+        // //for vertical positioning of numbers.
+        // let tickBounds = tick.getBBox();
+        // num.setAttribute('x', `${firstTickPos + i*spacing}`);
+        // num.setAttribute('y', `${params.y + 0.5*tickBounds.height}`);
+        // let numBounds = num.getBBox();
+        // num.setAttribute('transform', `translate(0, ${0.9*numBounds.height})`);
+        // //if the number will be rendered only partially, hide it. This is done with reference to the viewBox of
+        // //the surrounding SVG element.
+        // if (numBounds.x < svg_vals.x || numBounds.x + numBounds.width > svg_vals.x + svg_vals.width) {
+        //     num.classList.add('noshow');
+        // }
     }
 }
 
+function generateAxisNumbers(target, params) {
+
+    let tickInfo = tickPositioning(params);
+
+    let firstTick = tickInfo.first;
+    let firstTickPos = tickInfo.firstPos;
+    let n_ticks = tickInfo.n;
+    let spacing = tickInfo.spacing;
+    let inc = tickInfo.inc;
+
+    let existingNums = target.getElementsByTagName('text');
+    let tickHeight = document.getElementsByClassName('tickmark')[0].getBBox().height;
+
+    for (let i = 0; i <= n_ticks; i++) {
+
+        let num;
+            if (existingNums[i]) {
+                num = existingNums[i];
+                num.classList.remove('noshow');
+            } else {
+                //create SVG 'text' element for the corresponding number
+                num = document.createElementNS(xmlns, 'text');
+                num.setAttribute('class', 'ticknumber');
+                target.appendChild(num);
+                num.insertAdjacentText('beforeend', '');
+            }
+            let rev = 1;
+            if (params.reverse == true) {rev = -1;}
+            num.childNodes[0].nodeValue = `${Math.round(rev*10*(firstTick + i*inc))/10}`;
+            
+            
+            //get bounding boxes of the tick mark and the number, to provide coordinate info
+            //for vertical positioning of numbers.
+            num.setAttribute('x', `${firstTickPos + i*spacing}`);
+            num.setAttribute('y', `${params.y + 0.5*tickHeight}`);
+            let numBounds = num.getBBox();
+            num.setAttribute('transform', `translate(0, ${0.9*numBounds.height})`);
+            //if the number will be rendered only partially, hide it. This is done with reference to the viewBox of
+            //the surrounding SVG element.
+            if (numBounds.x < svg_vals.x || numBounds.x + numBounds.width > svg_vals.x + svg_vals.width) {
+                num.classList.add('noshow');
+            }
+    }
+
+}
+
+function calculateSpacing(params) {
+    let spacing = params.spacing;
+
+    //this spacing stuff is a bit hacky, and could be done better.
+    //if spacing is too big, inject intermediate tick marks...
+    while (spacing > svg_vals.width/5) {
+        spacing = spacing/5;
+    }
+    //if spacing is too tight, remove tick marks
+    while (spacing < svg_vals.width/20) {
+        spacing = spacing*5;
+    }
+    return spacing;
+}
+
+function tickPositioning (params) {
+    let spacing = calculateSpacing(params);
+    let inc = spacing/params.spacing;
+
+    let first = inc*Math.ceil(params.min/inc);
+    let firstPos = map_range(first, params, svg_limits);
+    let n = Math.floor((svg_vals.width - firstPos)/spacing);
+
+    return {n, first, firstPos, spacing, inc};
+}
 
 //find current min and max on a scale...
 function axisMinMax(originX, spacing) {
@@ -374,6 +436,7 @@ function translateZero (inc) {
     updateParams(params_static);
     updateParams(params_dynamic);
     generateTickmarks(ticks_static, params_static);
+    generateAxisNumbers(ticks_static, params_static);
 
     //reposition the sliders
     range_scale.value = old_scale;

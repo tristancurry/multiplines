@@ -162,7 +162,7 @@ text {
     pointer-events: none;
 }
 
-#tickmark {
+#tickmark-template {
     stroke-width: 0.5px;
 }
 
