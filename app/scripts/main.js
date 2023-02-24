@@ -15,6 +15,7 @@ const xlink = 'http://www.w3.org/1999/xlink';
 //there's probably some packaging into arrays and/or generation in JS that
 //could make this less wordy.
 const numberlines = document.getElementById('numberlines');
+const layered = document.getElementById('layered');
 const svg_box = document.getElementsByTagName('svg')[0];
 
 //at some point around here need to bundle some of these things into a function
@@ -54,8 +55,10 @@ const zoomOut = document.getElementById('zoomOut');
 
 //from here there's a bunch of geometry and layout things.
 //TODO: bundle into a 'refresh' function that can be called if the geometry needs to be changed dynamically
-const params_static = {min:STATIC_AXIS_MIN, max:STATIC_AXIS_MAX, x:map_value(0, STATIC_AXIS_MIN, STATIC_AXIS_MAX, svg_limits.min, svg_limits.max), y:svg_vals.y + 2*TICKMARK_HEIGHT, spacing:svg_vals.width/(STATIC_AXIS_MAX - STATIC_AXIS_MIN), reverse:false};
-const params_dynamic = {x:params_static.x, y:svg_vals.y + svg_vals.height - 2*TICKMARK_HEIGHT, reverse:false};
+const params_static = {min:STATIC_AXIS_MIN, max:STATIC_AXIS_MAX, x:map_value(0, STATIC_AXIS_MIN, STATIC_AXIS_MAX, svg_limits.min, svg_limits.max), y:svg_vals.y + 2*TICKMARK_HEIGHT, spacing:svg_vals.width/(STATIC_AXIS_MAX - STATIC_AXIS_MIN), reverse:false, div:'numbers_static'};
+const params_dynamic = {x:params_static.x, y:svg_vals.y + svg_vals.height - 2*TICKMARK_HEIGHT, reverse:false, div:'numbers_dynamic'};
+
+
 range_scale.setAttribute('min', `${params_static.min}`);
 range_scale.setAttribute('max', `${params_static.max}`);
 
@@ -239,35 +242,6 @@ function generateTickmarks (target, params) {
         }
 
         tick.setAttribute('transform', `translate(${firstTickPos + i*spacing}, ${params.y})`);
-        
-        // let num;
-        // if (existingNums[i]) {
-        //     num = existingNums[i];
-        //     num.classList.remove('noshow');
-        // } else {
-        //     //create SVG 'text' element for the corresponding number
-        //     num = document.createElementNS(xmlns, 'text');
-        //     num.setAttribute('class', 'ticknumber');
-        //     target.appendChild(num);
-        //     num.insertAdjacentText('beforeend', '');
-        // }
-        // let rev = 1;
-        // if (params.reverse == true) {rev = -1;}
-        // num.childNodes[0].nodeValue = `${Math.round(rev*10*(firstTick + i*inc))/10}`;
-        
-        
-        // //get bounding boxes of the tick mark and the number, to provide coordinate info
-        // //for vertical positioning of numbers.
-        // let tickBounds = tick.getBBox();
-        // num.setAttribute('x', `${firstTickPos + i*spacing}`);
-        // num.setAttribute('y', `${params.y + 0.5*tickBounds.height}`);
-        // let numBounds = num.getBBox();
-        // num.setAttribute('transform', `translate(0, ${0.9*numBounds.height})`);
-        // //if the number will be rendered only partially, hide it. This is done with reference to the viewBox of
-        // //the surrounding SVG element.
-        // if (numBounds.x < svg_vals.x || numBounds.x + numBounds.width > svg_vals.x + svg_vals.width) {
-        //     num.classList.add('noshow');
-        // }
     }
 }
 

@@ -10,6 +10,8 @@
 <body>
     <div id="numberlines">
         <div id="layered" draggable="false">
+            <div id="numbers_static" class="axis_numbers"></div>
+            <div id="numbers_dynamic" class="axis_numbers"></div>
             <input type="range" class="range_overlay" id="range_zero" min="-5" max="5" step="0.1" style="direction:rtl"/>
             <input type="range" class="range_overlay" id="range_scale" min="-5" max="5" step="any" />
             <input type="range" class="range_overlay" id="range_eqn" step="any" max="100" value="0">
@@ -33,9 +35,7 @@
                         <path id="axis_dynamic" d="m-25 70h150"/>
                         <g class="tickmarks"></g>
                     </g>    
-                </g>
-                
-                
+                </g>      
             </svg>
         </div>
         <div id="controls">

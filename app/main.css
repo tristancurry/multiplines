@@ -203,3 +203,10 @@ text {
 .zoomButton {
     display: none;
 }
+
+.axis_numbers {
+    position:absolute;
+    width: 100%;
+    height: 20px;
+    background: rgba(0,0,0,0.1);
+}
