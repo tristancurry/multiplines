@@ -1,4 +1,4 @@
-const dpRounding = ROUNDING_DECIMAL_POINTS;
+let dpRounding = ROUNDING_DECIMAL_POINTS;
 let scale_factor = SCALE_FACTOR_DEFAULT;
 let divide = false; 
 let scaling = false;
@@ -58,7 +58,6 @@ const params_static = {min:STATIC_AXIS_MIN, max:STATIC_AXIS_MAX, x:map_value(0, 
 const params_dynamic = {x:params_static.x, y:svg_vals.y + svg_vals.height - 2*TICKMARK_HEIGHT, reverse:false};
 range_scale.setAttribute('min', `${params_static.min}`);
 range_scale.setAttribute('max', `${params_static.max}`);
-
 
 //now make sure the axes, input ranges and indicators are visually aligned to these params...
 axis_static.setAttribute('d', `m${svg_vals.x} ${params_static.y}h${svg_vals.width}`);
