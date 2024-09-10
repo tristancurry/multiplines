@@ -208,7 +208,7 @@ scale_factor = n;
 //this is used to produce the SVG axis with appropriate spacings and numbering of tick marks
 function generateTickmarks (target, params) {
     //do this in canvas instead of svg...
-
+    acCtx.clearRect(0, 0, axesCanvas.width, axesCanvas.height);
     let inc = 1;
     let spacing = params.spacing;
 
@@ -224,12 +224,13 @@ function generateTickmarks (target, params) {
         inc = inc*5;
     }
 
-    console.log(axesCanvas.width*spacing/svg_vals.width);
+    let canvasSpacing = axesCanvas.width*spacing/svg_vals.width;
 
 
 
     let firstTick = inc*Math.ceil(params.min/inc);
     let firstTickPos = map_range(firstTick, params, svg_limits);
+    let firstTickPosCanvas = map_range(firstTick, params, {min: 0, max: axesCanvas.width});
     let n_ticks = Math.floor((svg_vals.width - firstTickPos)/spacing);
 
     //set display of existing ticks and numbers to 'none'
@@ -258,6 +259,8 @@ function generateTickmarks (target, params) {
         }
 
         tick.setAttribute('transform', `translate(${firstTickPos + i*spacing}, ${params.y})`);
+        acCtx.fillStyle = 'rgb(0,0,0)';
+        acCtx.fillRect(Math.floor(firstTickPosCanvas + i*canvasSpacing - 1), Math.round(0.5*axesCanvas.height - 5) , 2, 10);
         
         let num;
         if (existingNums[i]) {
