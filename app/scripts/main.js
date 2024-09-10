@@ -261,6 +261,7 @@ function generateTickmarks (target, params) {
         tick.setAttribute('transform', `translate(${firstTickPos + i*spacing}, ${params.y})`);
         acCtx.fillStyle = 'rgb(0,0,0)';
         acCtx.fillRect(Math.floor(firstTickPosCanvas + i*canvasSpacing - 1), Math.round(0.5*axesCanvas.height - 5) , 2, 10);
+        //now this is great and all, but what's actually needed are NUMBERS, not the tick marks!
         
         let num;
         if (existingNums[i]) {
