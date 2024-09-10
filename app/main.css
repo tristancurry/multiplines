@@ -196,10 +196,15 @@ text {
     fill: var(--sf-colour);
 }
 
+#axesCanvas {
+    position: absolute;
+    z-index: -1;
+}
+
 .noshow {
     display: none;
 }
 
 .zoomButton {
-    display: none;
+    /* display: none; */
 }

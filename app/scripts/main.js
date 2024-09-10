@@ -16,6 +16,8 @@ const xlink = 'http://www.w3.org/1999/xlink';
 //could make this less wordy.
 const numberlines = document.getElementById('numberlines');
 const svg_box = document.getElementsByTagName('svg')[0];
+const axesCanvas = document.getElementById('axesCanvas');
+const acCtx = axesCanvas.getContext('2d');
 
 //at some point around here need to bundle some of these things into a function
 //set the viewBox units to match the aspect ratio set in config.js
@@ -24,6 +26,11 @@ if(ASPECT_RATIO) {
 } else {
     svg_box.setAttribute('viewBox', `0 0 1770 100`);
 }
+
+const svgBounds = svg_box.getBoundingClientRect();
+axesCanvas.width  = svgBounds.width;
+axesCanvas.height  = svgBounds.height;
+
 
 let svg_vals = svg_box.viewBox.baseVal;
 let svg_limits = {min: svg_vals.x, max: svg_vals.x + svg_vals.width};
@@ -200,6 +207,7 @@ scale_factor = n;
 
 //this is used to produce the SVG axis with appropriate spacings and numbering of tick marks
 function generateTickmarks (target, params) {
+    //do this in canvas instead of svg...
 
     let inc = 1;
     let spacing = params.spacing;
@@ -215,6 +223,9 @@ function generateTickmarks (target, params) {
         spacing = spacing*5;
         inc = inc*5;
     }
+
+    console.log(axesCanvas.width*spacing/svg_vals.width);
+
 
 
     let firstTick = inc*Math.ceil(params.min/inc);
